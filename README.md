@@ -4,11 +4,13 @@
 
 _Disclaimer:_ This is the method I used to run the Pi locally with my laptop there is a good chance that there are other methods will work as well.
 
+
 ### Basic Hardware Setup
 
 You will need an ethernet cable to connect the Pi to your laptop, if your laptop does not have an ethernet port you can get a USB to ethernet adapter.
 
 Plug in the Pi using the power supply, and also plug the Pi into your laptop/computer using the ethernet cable.
+
 
 ### VNC Viewer Setup
 
@@ -19,6 +21,7 @@ At the top bar go to File>New Connection. Set the VNC Server to be "raspberrypi.
 VNC Viewer should prompt to enter a username and password, I can provide those to you just message me.
 
 After this you should be at the Desktop for the Raspberry Pi.
+
 
 ### Troubleshooting
 
