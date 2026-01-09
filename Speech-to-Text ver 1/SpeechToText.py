@@ -25,26 +25,23 @@ def transcribe_audio(audio):
 def main():
     print("Speech to Text Program Starting...\n")
     audio = record_audio()
-    text = transcribe_audio(audio)
+    user_input = transcribe_audio(audio)
 
     # Define your prompt here
-    prompt = f'''{{
-        "system": "You are a robot control agent. Convert user instructions into JSON. Only output the JSON output nothing else",
-            "schema": {{
-                "action": "fetch|place|deliver|stop",
-                "object": {{
-                    "name": "string",
-                    "color": "string or null",
-                    "size": "string or null"
-                }},
-                "location": {{
-                    "from": "string or null"
-                }},
-                "to": "string or null"
-            }}
-        }} User: """{text}"""'''
+    prompt = """You are a robot control agent. Convert user instructions into JSON.
 
-    reply = TextToJSON(prompt)
+    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white), to (location or null)
+
+    Example:
+    User: bring me the red apple
+    JSON: {{"action":"fetch","object":"apple","color":"red","to":null}}
+
+    User: {text}
+    JSON:"""
+
+    formatted = prompt.format(text = user_input)
+
+    reply = TextToJSON(formatted)
 
     print("\nLLM Response:\n", reply)
 

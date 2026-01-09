@@ -1,30 +1,25 @@
 import ollama
 
-def TextToJSON(prompt: str, model_name = "gemma3:1b") -> str:
+def TextToJSON(speech_input: str, model_name = "gemma3:270m") -> str:
 
     # Example User Input for testing
-    text = "Bring me my red cup"
+    speech_input = "get the blue mug from the kitchen"
 
-    prompt = f'''{{
-        "system": "You are a robot control agent. Convert user instructions into JSON. Only output the JSON output nothing else",
-            "schema": {{
-                "action": "fetch|place|deliver|stop",
-                "object": {{
-                    "name": "string",
-                    "color": "string or null",
-                    "size": "string or null"
-                }},
-                "location": {{
-                    "from": "string or null"
-                }},
-                "to": "string or null"
-            }}
-        }} User: """{text}"""'''
+    prompt = """You are a robot control agent. Convert user instructions into JSON.
 
-    
+    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white), to (location or null)
+
+    Example:
+    User: bring me the red apple
+    JSON: {{"action":"fetch","object":"apple","color":"red","to":null}}
+
+    User: {text}
+    JSON:"""
+
+    formatted = prompt.format(text = speech_input)
 
     response = ollama.chat(model=model_name, messages=[
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": formatted}
     ])
 
     # Return the model's response
