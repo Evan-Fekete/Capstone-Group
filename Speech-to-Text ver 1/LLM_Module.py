@@ -1,13 +1,17 @@
+# When running on Pi input command for virtual environment packages:
+
+# source ~/my_env/bin/activate
+
 import ollama
 
 def TextToJSON(speech_input: str, model_name = "gemma3:270m") -> str:
 
     # Example User Input for testing
-    speech_input = "get the blue mug from the kitchen"
+    speech_input = "get the white shoe"
 
     prompt = """You are a robot control agent. Convert user instructions into JSON.
 
-    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white), to (location or null)
+    Schema: action (fetch), object (apple/mug/bottle/shoe), color (red/blue/green/white), to (location or null)
 
     Example:
     User: bring me the red apple
