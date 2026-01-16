@@ -25,6 +25,14 @@ After this you should be at the Desktop for the Raspberry Pi.
 
 ### Troubleshooting
 
-An issue I ran into was with my ethernet cable, so if you are having some connection issues changing might help.
+An issue I ran into was with my ethernet cable, so if you are having some connection issues changing the cable might help. Another solution is to connect to the Pi locally using the ethernet cable, then connecting the Pi to Wifi and then finding the IP that the Pi is assigned and then using VNC to connect to that IP, I have tried this and it largely solves the cable issue.
 
 Another issue worth mentioning is we are not able to access the school wifi using the Pi (outside the open house day) ideally we can install everything onto the pi outside of school and just work on the Pi without connecting to the internet.
+
+## How to pull from main branch of repository
+
+Use this command in the cloned repository on your computer.
+
+````
+git pull origin main
+````
