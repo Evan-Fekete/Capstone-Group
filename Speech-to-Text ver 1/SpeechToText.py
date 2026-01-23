@@ -1,10 +1,14 @@
+# When running on Pi input command for virtual environment packages:
+
+# source ~/my_env/bin/activate
+
 import whisper
 import sounddevice as sd
 import numpy as np
 from LLM_Module import TextToJSON
 
 # Load Whisper model (use "tiny", "base", "small", etc. for faster results)
-model = whisper.load_model("base")
+model = whisper.load_model("tiny")
 
 SAMPLE_RATE = 16000  # Whisper expects 16 kHz audio
 CHUNK_DURATION = 5    # seconds per audio chunk

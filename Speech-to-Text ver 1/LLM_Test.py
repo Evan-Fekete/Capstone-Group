@@ -1,3 +1,7 @@
+# When running on Pi input command for virtual environment packages:
+
+# source ~/my_env/bin/activate
+
 import numpy as np
 from LLM_Module import TextToJSON
 
