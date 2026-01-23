@@ -6,7 +6,7 @@ import json
 
 
 def look_around(find_object):
-    class_names = ["Apple", "Medicine Bottle", "Mug", "Remote", "Shoe", "user"]
+    class_names = ["apple", "medicine", "mug", "remote", "shoe", "user"]
     # class_names = ["user"]
 
     if find_object in class_names:
@@ -16,7 +16,7 @@ def look_around(find_object):
         cap.set(4, 480)
 
         # model
-        model = YOLO("yolo-Weights/best.pt")
+        model = YOLO("yolo-Weights/NK01_model_v1.pt")
 
         # object classes
         target = class_names.index(find_object)
