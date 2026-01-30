@@ -1,3 +1,4 @@
 # Ignore Virtual Environments during Git Push
 **/ronak_venv/
 **/FSMvenv/
+**/speechvenv/
