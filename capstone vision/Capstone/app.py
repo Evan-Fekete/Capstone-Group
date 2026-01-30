@@ -7,23 +7,17 @@ import json
 
 def look_around(find_object):
     class_names = ["apple", "medicine", "mug", "remote", "shoe", "user"]
-    # class_names = ["user"]
 
     if find_object in class_names:
         # start webcam
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         cap.set(3, 640)
         cap.set(4, 480)
-
         # model
         model = YOLO("yolo-Weights/NK01_model_v1.pt")
 
-        # object classes
-        target = class_names.index(find_object)
-
         current = time.time()
         runtime = 10
-        print("TARGET:", find_object, "ID:", target)
         while True:
 
             if time.time()-current > runtime:
@@ -36,15 +30,12 @@ def look_around(find_object):
             # coordinates
             for r in results:
                 boxes = r.boxes
-
                 for box in boxes:
-                    cls = int(box.cls[0])
-                    if cls != target:
-                        continue
                     # bounding box
                     x1, y1, x2, y2 = box.xyxy[0]
                     x1, y1, x2, y2 = int(x1), int(y1), int(
                         x2), int(y2)  # convert to int values
+                    cls = int(box.cls[0])
 
                     # put box in cam
                     cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
@@ -54,8 +45,10 @@ def look_around(find_object):
                     print("Confidence --->", confidence)
 
                     # class name
-                    cls = int(box.cls[0])
                     print("Class name -->", class_names[cls])
+
+                    # Dimensions
+                    dimenisons(find_object, class_names[cls], x1, y1, x2, y2)
 
                     # object details
                     org = [x1, y1]
@@ -78,7 +71,23 @@ def look_around(find_object):
         print("Object does not exist in this environment")
 
 
+def dimenisons(find_object, class_names, x1, y1, x2, y2):
+    bounding_x = int(x2) - int(x1)
+    bounding_y = int(y2) - int(y1)
+    print("Dimenison X of Bounding Box -->", bounding_x)
+    print("Dimenison Y of Bounding Box -->", bounding_y)
+    if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
+        print("You are in front of mug")
+    elif (find_object == class_names and 348 < bounding_x and 305 < bounding_y):
+        print("You are in front of apple")
+    elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
+        print("You are in front of medicine")
+    elif (find_object == class_names and 265 < bounding_x and 455 < bounding_y):
+        print("You are in front of user")
+
+
 with open('object.JSON', 'r') as input:
     query = json.load(input)
+
 
 look_around(query.get("object"))
