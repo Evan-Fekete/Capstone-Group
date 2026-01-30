@@ -1,3 +1,6 @@
+# Before working start VENV
+# enter: source/FSMvenv/bin/activate
+
 import math
 from enum import Enum
 
@@ -25,6 +28,7 @@ def main():
                 print("Current State: FIND_OBJ")
             case state.TRAVEL_TO_OBJ:
                 print("Current State: TRAVEL_TO_OBJ")
+                reactive_step()
             case state.RETURN_OBJ:
                 print("Current State: RETURN_OBJ")
             case _:
