@@ -27,9 +27,11 @@ def transcribe_audio(audio):
     return text
 
 def main():
-    print("Speech to Text Program Starting...\n")
-    audio = record_audio()
-    user_input = transcribe_audio(audio)
+    # print("Speech to Text Program Starting...\n")
+    # audio = record_audio()
+    # user_input = transcribe_audio(audio)
+
+    user_input = "Bring me the red cup"
 
     # Define your prompt here
     prompt = """You are a robot control agent. Convert user instructions into JSON.
