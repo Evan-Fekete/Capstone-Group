@@ -4,7 +4,7 @@
 
 import ollama
 
-def TextToJSON(speech_input: str, model_name = "gemma3:1b") -> str:
+def TextToJSON(speech_input: str, model_name = "gemma3:270m") -> str:
 
     # # Example User Input for testing
     # speech_input = "my name is john bring me the red mug"

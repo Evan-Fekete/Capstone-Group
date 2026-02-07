@@ -2,6 +2,7 @@
 
 # source ~/my_env/bin/activate
 
+import time
 import whisper
 import sounddevice as sd
 import numpy as np
@@ -27,20 +28,23 @@ def transcribe_audio(audio):
     return text
 
 def main():
+
+    start_time = time.perf_counter()
+
     # print("Speech to Text Program Starting...\n")
     # audio = record_audio()
     # user_input = transcribe_audio(audio)
 
-    user_input = "Bring me the red cup"
+    user_input = "I'm thirsty can you bring my my bottle"
 
     # Define your prompt here
-    prompt = """You are a robot control agent. Convert user instructions into JSON.
+    prompt = """You are a robot control agent. Convert user instructions into JSON. If parameter is not known then output unknown always display action, object, and color.
 
-    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white), to (location or null)
+    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
 
     Example:
     User: bring me the red apple
-    JSON: {{"action":"fetch","object":"apple","color":"red","to":null}}
+    JSON: {{"action":"fetch","object":"apple","color":"red"}}
 
     User: {text}
     JSON:"""
@@ -50,6 +54,11 @@ def main():
     reply = TextToJSON(formatted)
 
     print("\nLLM Response:\n", reply)
+
+    end_time = time.perf_counter()
+
+    duration = end_time - start_time
+    print(f"The code ran for {duration} seconds")
 
 if __name__ == "__main__":
     main()

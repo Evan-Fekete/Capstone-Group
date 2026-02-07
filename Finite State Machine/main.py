@@ -8,7 +8,7 @@
 
 import math
 import time
-# import navigation as nav
+import navigation as nav
 import SpeechToText as speech
 from enum import Enum
 
@@ -18,7 +18,8 @@ class state(Enum):
     TAKE_INSTRUCTION = 2
     FIND_OBJ = 3
     TRAVEL_TO_OBJ = 4
-    RETURN_OBJ = 5
+    FIND_USER = 5
+    RETURN_OBJ = 6
 
 def main():
     print("Starting Raspberry Pi FSM...")
@@ -69,12 +70,16 @@ def main():
                 case state.FIND_OBJ:
                     print("Current State: FIND_OBJ")
 
+                    # TODO: Add Logic for identifying object and then going into TRAVEL_TO_OBJ STATE
 
                     time.sleep(5)
 
                 case state.TRAVEL_TO_OBJ:
                     print("Current State: TRAVEL_TO_OBJ")
                     reactive_step()
+
+                    # TODO: Add logic for moving towards object and checking if object is in view if not go back state
+
                 case state.RETURN_OBJ:
                     print("Current State: RETURN_OBJ")
                 case _:

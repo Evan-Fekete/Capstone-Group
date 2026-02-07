@@ -10,7 +10,13 @@ def look_around(find_object):
 
     if find_object in class_names:
         # start webcam
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        
+        # Uncomment for Linux
+        cap = cv2.VideoCapture(0)
+        
+        # # Uncomment for Windows
+        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
         cap.set(3, 640)
         cap.set(4, 480)
         # model
