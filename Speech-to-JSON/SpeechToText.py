@@ -38,7 +38,7 @@ def main():
     user_input = "I'm thirsty can you bring my my bottle"
 
     # Define your prompt here
-    prompt = """You are a robot control agent. Convert user instructions into JSON. If parameter is not known then output unknown always display action, object, and color.
+    prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
 
     Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
 
@@ -46,6 +46,7 @@ def main():
     User: bring me the red apple
     JSON: {{"action":"fetch","object":"apple","color":"red"}}
 
+    Real User Input:
     User: {text}
     JSON:"""
 
