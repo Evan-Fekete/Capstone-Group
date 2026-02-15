@@ -31,10 +31,13 @@ class state(Enum):
 def printCurrentState(currentState):
     print("Current State: " + currentState)
 
-def send_command(cmd):
+def sendCommand(cmd):
     ser.write(f'{cmd}\n'.encode())
     time.sleep(0.1)
     # read back a confirmation 
+    if ser.in_waiting:
+        return ser.readline().decode().strip()
+    return None
 
 def save_json_response(response_str, filename="Object.json"):
     """Save LLM JSON response to a file in the script directory."""
@@ -94,18 +97,26 @@ def main():
                     
                 case state.FIND_OBJ:
                     print("Current State: FIND_OBJ")
+
+                    iter = 0
                     
                     # TODO: create loop for looking for object and when found go to travel state
                     while(1):
-                        # Check if the object has been found and return its bounding box
+                        if (iter == 0):
+                            sendCommand("SWIVELLEFT")
+                        else:
+                            sendCommand("SWIVELRIGHT")
+
                         [findObject, foundBool, bounding_x, bounding_y] = vision.look_around()
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
+                            servoPosition = sendCommand("SWIVELSTOP")
+                            print("Servo is at " + servoPosition)
+                            break
                     
                 case state.TRAVEL_TO_OBJ:
                     print("Current State: TRAVEL_TO_OBJ")
-                    reactive_step()
                     # TODO: Add logic for moving towards object and checking if object is in view if not go back state
                 case state.FIND_USER:
                     print("Current State: FIND_USER")
