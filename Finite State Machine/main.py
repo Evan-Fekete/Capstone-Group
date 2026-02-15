@@ -7,13 +7,16 @@ import os
 import json
 import math
 import time
-import navigation as nav
+import serial
 import SpeechToText as speech
 import app as vision
 from enum import Enum
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Define interface for talking with ESP32
+ser = serial.Serial('/dev/serial0', 9600, timeout=1)
 
 # Define Constants for States for FSM
 class state(Enum):
@@ -24,6 +27,14 @@ class state(Enum):
     FIND_USER = 5
     RETURN_OBJ = 6
     PICKUP_OBJ = 7
+
+def printCurrentState(currentState):
+    print("Current State: " + currentState)
+
+def send_command(cmd):
+    ser.write(f'{cmd}\n'.encode())
+    time.sleep(0.1)
+    # read back a confirmation 
 
 def save_json_response(response_str, filename="Object.json"):
     """Save LLM JSON response to a file in the script directory."""
@@ -52,7 +63,7 @@ def main():
         while(1):
             match currentState:
                 case state.STARTUP:
-                    print("Current State: STARTUP")
+                    printCurrentState(currentState)                    
                     time.sleep(5)
                     currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
@@ -64,13 +75,13 @@ def main():
                     user_input = "Bring me the apple"
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
-                    Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
-                    Example:
-                    User: bring me the red apple
-                    JSON: {{"action":"fetch","object":"apple","color":"red"}}
-                    Real User Input:
-                    User: {text}
-                    JSON:"""
+                        Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
+                        Example:
+                        User: bring me the red apple
+                        JSON: {{"action":"fetch","object":"apple","color":"red"}}
+                        Real User Input:
+                        User: {text}
+                        JSON:"""
                     formatted = prompt.format(text = user_input)
                     reply = speech.TextToJSON(formatted)
                     print("\nLLM Response:\n", reply)
@@ -112,7 +123,6 @@ def main():
         print("Running interuppted by User")
     finally:
         print("ENDING...")
-        nav.cleanup()
     
 if __name__ == "__main__":
     main()

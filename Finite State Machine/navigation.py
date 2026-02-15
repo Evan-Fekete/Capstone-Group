@@ -67,7 +67,6 @@ sensor = DistanceSensor(echo=24, trigger=23, max_distance=4)
 # ESP32 Interface pin
 esp32_interface = DigitalOutputDevice(ESP32_INTERFACE)
 
-
 # -----------------------------
 # LOW-LEVEL HELPERS
 # -----------------------------
