@@ -9,6 +9,7 @@ import math
 import time
 import navigation as nav
 import SpeechToText as speech
+import app as vision
 from enum import Enum
 
 # Get the directory where this script is located
@@ -22,6 +23,7 @@ class state(Enum):
     TRAVEL_TO_OBJ = 4
     FIND_USER = 5
     RETURN_OBJ = 6
+    PICKUP_OBJ = 7
 
 def save_json_response(response_str, filename="Object.json"):
     """Save LLM JSON response to a file in the script directory."""
@@ -81,21 +83,36 @@ def main():
                     
                 case state.FIND_OBJ:
                     print("Current State: FIND_OBJ")
-                    # TODO: Add Logic for identifying object and then going into TRAVEL_TO_OBJ STATE
-                    time.sleep(5)
+                    
+                    # TODO: create loop for looking for object and when found go to travel state
+                    while(1):
+                        # Check if the object has been found and return its bounding box
+                        [findObject, foundBool, bounding_x, bounding_y] = vision.look_around()
+
+                        if (foundBool == True):
+                            print(findObject + " has been found.")
+                    
                 case state.TRAVEL_TO_OBJ:
                     print("Current State: TRAVEL_TO_OBJ")
                     reactive_step()
                     # TODO: Add logic for moving towards object and checking if object is in view if not go back state
+                case state.FIND_USER:
+                    print("Current State: FIND_USER")
+                
                 case state.RETURN_OBJ:
                     print("Current State: RETURN_OBJ")
+
+                case state.PICKUP_OBJ:
+                    print("Current State: PICKUP_OBJ")
+
                 case _:
                     print("Current State: UNKNOWN STATE")
+
     except KeyboardInterrupt:
         print("Running interuppted by User")
     finally:
         print("ENDING...")
-        # nav.cleanup()
+        nav.cleanup()
     
 if __name__ == "__main__":
     main()

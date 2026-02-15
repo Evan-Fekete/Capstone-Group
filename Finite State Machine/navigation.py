@@ -42,6 +42,9 @@ RIGHT_BACK_IN1 = 26
 RIGHT_BACK_IN2 = 19
 RIGHT_BACK_ENB = 25
 
+# ESP32 pin
+ESP32_INTERFACE = 5
+
 # Direction pins
 left_back_in1   = DigitalOutputDevice(LEFT_BACK_IN1)
 left_back_in2   = DigitalOutputDevice(LEFT_BACK_IN2)
@@ -60,6 +63,10 @@ right_back_pwm  = PWMOutputDevice(RIGHT_BACK_ENB,  frequency=1000, initial_value
 
 # Ultrasonic sensor
 sensor = DistanceSensor(echo=24, trigger=23, max_distance=4)
+
+# ESP32 Interface pin
+esp32_interface = DigitalOutputDevice(ESP32_INTERFACE)
+
 
 # -----------------------------
 # LOW-LEVEL HELPERS
@@ -222,6 +229,7 @@ def cleanup():
     right_front_in2.close()
     right_back_in1.close()
     right_back_in2.close()
+    esp32_interface.close()
     sensor.close()
     debug_print("Navigation cleanup complete")
 
@@ -240,4 +248,93 @@ if __name__ == "__main__":
     finally:
         cleanup()
 
+# -----------------------------
+# Pickup with ESP32
+# -----------------------------
+def pickUpObject():
+    """
+    Move forward slightly and then send a signal to the
+    ESP32 to start the pickup code on the microcontroller
+    """
+    forward(1)
 
+    esp32_interface.on()
+    sleep(1)
+    esp32_interface.off()
+
+
+# -----------------------------
+# MAIN TEST FUNCTION
+# -----------------------------
+def main():
+    """
+    Diagnostic test routine for mecanum wheel car.
+    Tests each motor individually then all movement patterns.
+    """
+
+    movement_test_duration = 3  # seconds for movement tests
+    pause_between = 1
+    test_speed = 0.25  # 25% speed for testing
+    
+    try:
+        print("=" * 50)
+        print("   MECANUM WHEEL CAR DIAGNOSTIC TEST")
+        print("=" * 50)
+        print(f"Test speed: {int(test_speed * 100)}%")
+        print("Press Ctrl+C at any time to abort\n")
+        
+        # Set speed for all tests
+        set_all_speed(test_speed)
+        sleep(2)
+        
+        # Test 1: Ultrasonic sensor
+        print("-" * 40)
+        print("TEST 1: Ultrasonic Sensor")
+        print("-" * 40)
+        for i in range(3):
+            dist = get_distance()
+            print(f"  Reading {i+1}: {dist} cm")
+            sleep(0.5)
+        print("Sensor test complete!\n")
+        sleep(pause_between)
+        
+        # Test 2: Forward
+        print("-" * 40)
+        print("TEST 2: Forward Movement")
+        print("-" * 40)
+        forward(movement_test_duration)
+        print("Forward test complete!\n")
+        sleep(pause_between)
+        
+        # Test 3: Backward
+        print("-" * 40)
+        print("TEST 3: Backward Movement")
+        print("-" * 40)
+        backward(movement_test_duration)
+        print("Backward test complete!\n")
+        sleep(pause_between)
+        
+        # Test 4: Strafe left
+        print("-" * 40)
+        print("TEST 4: Strafe Left")
+        print("-" * 40)
+        strafe_left(movement_test_duration)
+        print("Strafe left test complete!\n")
+        sleep(pause_between)
+        
+        # Test 5: Strafe right
+        print("-" * 40)
+        print("TEST 5: Strafe Right")
+        print("-" * 40)
+        strafe_right(movement_test_duration)
+        print("Strafe right test complete!\n")
+        sleep(pause_between)
+        
+        print("=" * 50)
+        print("    ALL DIAGNOSTIC TESTS COMPLETED!")
+        print("=" * 50)
+        
+    except KeyboardInterrupt:
+        print("\n\nTest aborted by user!")
+    finally:
+        cleanup()
