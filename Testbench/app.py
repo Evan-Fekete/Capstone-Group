@@ -90,7 +90,7 @@ def dimenisons(find_object, class_names, x1, y1, x2, y2):
     if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
         return [True, bounding_x, bounding_y]
-    elif (find_object == class_names and 348 < bounding_x and 305 < bounding_y):
+    elif (find_object == class_names and 50 < bounding_x and 50 < bounding_y):
         print("You are in front of apple")
         return [True, bounding_x, bounding_y]
     elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):

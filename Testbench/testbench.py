@@ -4,7 +4,7 @@ import json
 from app import look_around
 
 # UART setup
-ser = serial.Serial('/dev/serial0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=1)
 time.sleep(2)  # wait for ESP32 to boot
 
 
