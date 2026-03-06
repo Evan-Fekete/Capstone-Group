@@ -32,32 +32,34 @@ class state(Enum):
 
 
 def printCurrentState(currentState):
-    print("Current State: " + currentState)
+    print("Current State: " + str(currentState))
 
 
 def sendCommand(cmd):
+    print("SENDING COMMAND: " + str(cmd))
+
     ser.write(f'{cmd}\n'.encode())
     time.sleep(0.1)
     # read back a confirmation
     if ser.in_waiting:
+        print("RECEIVED DATA: " + ser.readLine().decode().strip())
         return ser.readline().decode().strip()
     return None
 
 
-def save_json_response(response_str, filename="Object.json"):
+def save_json_response(response_str, filename="object.JSON"):
     """Save LLM JSON response to a file in the script directory."""
     filepath = os.path.join(SCRIPT_DIR, filename)
     try:
         # Parse the JSON string to validate it
         json_data = json.loads(response_str)
-        # Write to file with pretty formatting
+        # Write to file
         with open(filepath, 'w') as f:
             json.dump(json_data, f, indent=4)
         print(f"JSON saved to: {filepath}")
         return json_data
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
-        # Save raw response anyway for debugging
         with open(filepath, 'w') as f:
             f.write(response_str)
         return None
@@ -73,15 +75,18 @@ def main():
             match currentState:
                 case state.STARTUP:
                     printCurrentState(currentState)
-                    time.sleep(5)
+
+                    # This vision is call is not used but it activates the camera early on in the code
+                    vision.look_around("apple")
+                    
                     currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
-                    print("Current State: TAKE_INSTRUCTION")
+                    printCurrentState(currentState)
                     # # Uncomment to activate recording and transcription
                     # audio = speech.record_audio()
                     # user_input = speech.transcribe_audio(audio)
                     # Uncomment to define user input
-                    user_input = "Bring me the apple"
+                    user_input = "Bring me the red apple"
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
                         Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
@@ -97,6 +102,7 @@ def main():
 
                     # Save the JSON response to file
                     json_data = save_json_response(reply)
+                    print("JSON Data: " + str(json_data))
 
                     currentState = state.FIND_OBJ
                     time.sleep(5)
@@ -108,28 +114,68 @@ def main():
                     # After this the robot should ideally be facing the object, now it will move forward
 
                     # TODO: Work on logic for finding the object,
+                    # 
                     # TODO: determine a good turnWeight for the robot,
-                    print("Current State: FIND_OBJ")
+                    printCurrentState(currentState)
 
-                    iter = 0
+                    with open('object.JSON', 'r') as input:
+                        query = json.load(input)
+                    findObject = query.get("object")
+
+                    swivleCount = 0
+                    turnCount = 0
+                    swivleRight = True
+                    sendCommand("SWIVLE_START")
 
                     while (1):
-                        if (iter == 0):
-                            sendCommand("SWIVELLEFT")
-                        else:
-                            sendCommand("SWIVELRIGHT")
+                        print("Swivle Count: " + str(swivleCount) + " Turn Count: " + str(turnCount) + "\n")
+                        
+                        if (swivleCount < 3 and swivleRight == True):
+                            sendCommand("SWIVLE_RIGHT")
+                            time.sleep(0.5)
+                            swivleCount += 1
 
-                        [findObject, class_names, foundBool, x1,
-                            y1, x2, y2] = vision.look_around()
+                        elif (swivleCount < 3 and swivleRight == False):
+                            sendCommand("SWIVLE_LEFT")
+                            time.sleep(0.5)
+                            swivleCount += 1
+
+                        elif (swivleCount >= 3 and turnCount < 3):
+                            # swivleCount must be above 20 so move forward
+                            sendCommand("FORWARD")
+                            time.sleep(1)
+                            swivleRight = not(swivleRight)
+                            swivleCount = 0
+                            turnCount += 1
+
+                        elif (swivleCount >= 3 and turnCount >= 3):
+                            # swivleCount must be above 20 and moved forward 3 times so turn around
+                            sendCommand("LEFT")
+                            time.sleep(3)
+                            swivleCount = 0
+                            turnCount = 0
+
+                        [findObject, foundBool, bounding_x, bounding_y] = vision.look_around(findObject)
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
-                            servoPosition = sendCommand("SWIVELSTOP")
-                            print("Servo is at " + servoPosition)
-                            break
+                            # servoPosition = sendCommand("SWIVELSTOP")
+                            # print("Servo is at " + str(servoPosition))
+
+                            # turnWeight = 0.5
+
+                            # # Turn Object based on servo position and turn weight
+                            # if (servoPosition > 0):
+                            #     sendCommand("LEFT")
+                            #     time.sleep(servoPosition*turnWeight)
+                            #     sendCommand("STOP")
+                            # else:
+                            #     sendCommand("RIGHT")
+                            #     time.sleep(servoPosition*turnWeight)
+                            #     sendCommand("STOP")
 
                 case state.TRAVEL_TO_OBJ:
-                    print("Current State: TRAVEL_TO_OBJ")
+                    printCurrentState(currentState)
                     # TODO: Add logic for moving towards object and checking if object is in view if not go back state
                     [bounding_x, bounding_y] = vision.dimenisons(
                         findObject, class_names, x1, y1, x2, y2)
@@ -137,13 +183,20 @@ def main():
                         sendCommand("FORWARD")
                     time.sleep(3)
                 case state.FIND_USER:
-                    print("Current State: FIND_USER")
+                    printCurrentState(currentState)
+                    # TODO Use similar code for FIND_OBJ to find user
 
                 case state.RETURN_OBJ:
-                    print("Current State: RETURN_OBJ")
+                    printCurrentState(currentState)
+                    # TODO User similar code for TRAVEL_TO_OBJ for returning object
 
                 case state.PICKUP_OBJ:
-                    print("Current State: PICKUP_OBJ")
+                    printCurrentState(currentState)
+
+                    sendCommand("PICKUP")
+                    time.sleep(10)
+
+                    currentState = state.FIND_USER
 
                 case _:
                     print("Current State: UNKNOWN STATE")

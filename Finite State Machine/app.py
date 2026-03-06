@@ -23,7 +23,9 @@ def look_around(find_object):
         model = YOLO("yolo-Weights/NK01_model_v1.pt")
 
         current = time.time()
-        runtime = 10
+        runtime = 5
+        found_result = [False, 0, 0]  # default if nothing detected
+
         while True:
 
             if time.time()-current > runtime:
@@ -54,7 +56,7 @@ def look_around(find_object):
                     print("Class name -->", class_names[cls])
 
                     # Dimensions
-                    [foundBool, bounding_x, bounding_y] = dimenisons(find_object, class_names[cls], x1, y1, x2, y2)
+                    found_result = dimenisons(find_object, class_names[cls], x1, y1, x2, y2)
 
                     # object details
                     org = [x1, y1]
@@ -74,20 +76,22 @@ def look_around(find_object):
         cap.release()
         cv2.destroyAllWindows()
 
-        return [find_object, foundBool, bounding_x, bounding_y]
+        return [find_object, found_result[0], found_result[1], found_result[2]]
     else:
         print("Object does not exist in this environment")
+        return None
 
 
 def dimenisons(find_object, class_names, x1, y1, x2, y2):
     bounding_x = int(x2) - int(x1)
     bounding_y = int(y2) - int(y1)
+    print("Find Object: " + find_object + ", Class Names: " + class_names)
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
     if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
         return [True, bounding_x, bounding_y]
-    elif (find_object == class_names and 348 < bounding_x and 305 < bounding_y):
+    elif (find_object == class_names and 50 < bounding_x and 50 < bounding_y):
         print("You are in front of apple")
         return [True, bounding_x, bounding_y]
     elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
@@ -100,9 +104,10 @@ def dimenisons(find_object, class_names, x1, y1, x2, y2):
         print("No object found")
         return [False, bounding_x, bounding_y]
 
+def main():
+    with open('object.JSON', 'r') as input:
+        query = json.load(input)
+    look_around(query.get("object"))
 
-with open('object.JSON', 'r') as input:
-    query = json.load(input)
-
-
-look_around(query.get("object"))
+if __name__ == "__main__":
+    main()
