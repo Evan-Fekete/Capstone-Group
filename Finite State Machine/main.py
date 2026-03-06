@@ -96,11 +96,17 @@ def main():
                     time.sleep(5)
                     
                 case state.FIND_OBJ:
+                    # This state will move robot forward (or some predefined sequence of movments)
+                    # Swivel camera nad look for object, if found stop the swiveling save servo position
+                    # based on servo position turn car (turn for servoPosition*turnWeight)
+                    # After this the robot should ideally be facing the object, now it will move forward
+
+                    # TODO: Work on logic for finding the object, 
+                    # TODO: determine a good turnWeight for the robot,
                     print("Current State: FIND_OBJ")
 
                     iter = 0
                     
-                    # TODO: create loop for looking for object and when found go to travel state
                     while(1):
                         if (iter == 0):
                             sendCommand("SWIVELLEFT")

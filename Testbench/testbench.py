@@ -41,7 +41,8 @@ def main():
     if found:
         # Step 2: Move toward object
         print(f"--- PHASE 2: FOUND {obj} (box: {bx}x{by})! APPROACHING ---")
-        send_command("FORWARD")
+        while (bx < 50 and by < 50):
+            send_command("FORWARD")
         time.sleep(3)
 
         # Step 3: Stop and pickup
