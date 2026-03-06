@@ -1,5 +1,5 @@
 # Before working start VENV also input: "git pull origin main"
-# 
+#
 # Also if you want to connect to Virtual Environment
 # Enter: source /FSMvenv/bin/activate
 import sys
@@ -19,6 +19,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ser = serial.Serial('/dev/serial0', 9600, timeout=1)
 
 # Define Constants for States for FSM
+
+
 class state(Enum):
     STARTUP = 1
     TAKE_INSTRUCTION = 2
@@ -28,16 +30,19 @@ class state(Enum):
     RETURN_OBJ = 6
     PICKUP_OBJ = 7
 
+
 def printCurrentState(currentState):
     print("Current State: " + currentState)
+
 
 def sendCommand(cmd):
     ser.write(f'{cmd}\n'.encode())
     time.sleep(0.1)
-    # read back a confirmation 
+    # read back a confirmation
     if ser.in_waiting:
         return ser.readline().decode().strip()
     return None
+
 
 def save_json_response(response_str, filename="Object.json"):
     """Save LLM JSON response to a file in the script directory."""
@@ -57,16 +62,17 @@ def save_json_response(response_str, filename="Object.json"):
             f.write(response_str)
         return None
 
+
 def main():
     print("Starting Raspberry Pi FSM...")
-    
+
     try:
         currentState = state.STARTUP
         # main match statement used for running code for current state
-        while(1):
+        while (1):
             match currentState:
                 case state.STARTUP:
-                    printCurrentState(currentState)                    
+                    printCurrentState(currentState)
                     time.sleep(5)
                     currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
@@ -85,48 +91,54 @@ def main():
                         Real User Input:
                         User: {text}
                         JSON:"""
-                    formatted = prompt.format(text = user_input)
+                    formatted = prompt.format(text=user_input)
                     reply = speech.TextToJSON(formatted)
                     print("\nLLM Response:\n", reply)
-                    
+
                     # Save the JSON response to file
                     json_data = save_json_response(reply)
-                    
+
                     currentState = state.FIND_OBJ
                     time.sleep(5)
-                    
+
                 case state.FIND_OBJ:
                     # This state will move robot forward (or some predefined sequence of movments)
                     # Swivel camera nad look for object, if found stop the swiveling save servo position
                     # based on servo position turn car (turn for servoPosition*turnWeight)
                     # After this the robot should ideally be facing the object, now it will move forward
 
-                    # TODO: Work on logic for finding the object, 
+                    # TODO: Work on logic for finding the object,
                     # TODO: determine a good turnWeight for the robot,
                     print("Current State: FIND_OBJ")
 
                     iter = 0
-                    
-                    while(1):
+
+                    while (1):
                         if (iter == 0):
                             sendCommand("SWIVELLEFT")
                         else:
                             sendCommand("SWIVELRIGHT")
 
-                        [findObject, foundBool, bounding_x, bounding_y] = vision.look_around()
+                        [findObject, class_names, foundBool, x1,
+                            y1, x2, y2] = vision.look_around()
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
                             servoPosition = sendCommand("SWIVELSTOP")
                             print("Servo is at " + servoPosition)
                             break
-                    
+
                 case state.TRAVEL_TO_OBJ:
                     print("Current State: TRAVEL_TO_OBJ")
                     # TODO: Add logic for moving towards object and checking if object is in view if not go back state
+                    [bounding_x, bounding_y] = vision.dimenisons(
+                        findObject, class_names, x1, y1, x2, y2)
+                    while (bounding_x < 50 and bounding_y < 50):
+                        sendCommand("FORWARD")
+                    time.sleep(3)
                 case state.FIND_USER:
                     print("Current State: FIND_USER")
-                
+
                 case state.RETURN_OBJ:
                     print("Current State: RETURN_OBJ")
 
@@ -140,6 +152,7 @@ def main():
         print("Running interuppted by User")
     finally:
         print("ENDING...")
-    
+
+
 if __name__ == "__main__":
     main()
