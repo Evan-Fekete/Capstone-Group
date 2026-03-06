@@ -10,10 +10,10 @@ def look_around(find_object):
 
     if find_object in class_names:
         # start webcam
-        
+
         # Uncomment for Linux
         cap = cv2.VideoCapture(0)
-        
+
         # # Uncomment for Windows
         # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
@@ -56,7 +56,8 @@ def look_around(find_object):
                     print("Class name -->", class_names[cls])
 
                     # Dimensions
-                    found_result = dimenisons(find_object, class_names[cls], x1, y1, x2, y2)
+                    found_result = dimenisons(
+                        find_object, class_names[cls], x1, y1, x2, y2)
 
                     # object details
                     org = [x1, y1]
