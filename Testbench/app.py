@@ -82,7 +82,6 @@ def look_around(find_object):
         print("Object does not exist in this environment")
         return None
 
-
 def dimenisons(find_object, class_names, x1, y1, x2, y2):
     bounding_x = int(x2) - int(x1)
     bounding_y = int(y2) - int(y1)
@@ -91,7 +90,7 @@ def dimenisons(find_object, class_names, x1, y1, x2, y2):
     if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
         return [True, bounding_x, bounding_y]
-    elif (find_object == class_names and 50 < bounding_x and 50 < bounding_y):
+    elif (find_object == class_names):
         print("You are in front of apple")
         return [True, bounding_x, bounding_y]
     elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):

@@ -38,10 +38,19 @@ def main():
 
     obj, found, bx, by = result
 
+    print(f"before bounding box x: {bx}")
+    print(f"before bounding box y: {by}")
+
+
     if found:
         # Step 2: Move toward object
         print(f"--- PHASE 2: FOUND {obj} (box: {bx}x{by})! APPROACHING ---")
-        while (bx < 50 and by < 50):
+        while (bx < 70 and by < 70):
+            result = look_around(target)
+            obj, found, bx, by = result
+            print(f"bounding box x: {bx}")
+            print(f"bounding box y: {by}")
+            print("Moving Forward")
             send_command("FORWARD")
         time.sleep(3)
 
