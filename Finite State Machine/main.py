@@ -2,6 +2,9 @@
 #
 # Also if you want to connect to Virtual Environment
 # Enter: source /FSMvenv/bin/activate
+
+# Blue Wire: Ground, White Wire: Rx, Black Wire: Tx
+
 import sys
 import os
 import json
@@ -83,10 +86,10 @@ def main():
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
                     # Uncomment to activate recording and transcription
-                    audio = speech.record_audio()
-                    user_input = speech.transcribe_audio(audio)
-                    # # Uncomment to define user input
-                    # user_input = "Bring me the red apple"
+                    # audio = speech.record_audio()
+                    # user_input = speech.transcribe_audio(audio)
+                    # Uncomment to define user input
+                    user_input = "Bring me the red apple"
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
                         Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe), color (red/blue/green/white/unknown)
