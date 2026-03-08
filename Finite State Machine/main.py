@@ -42,12 +42,14 @@ def sendCommand(cmd):
     print("SENDING COMMAND: " + str(cmd))
 
     ser.write(f'{cmd}\n'.encode())
-    time.sleep(0.1)
     # read back a confirmation
     if ser.in_waiting:
-        print("RECEIVED DATA: " + ser.readLine().decode().strip())
-        return ser.readline().decode().strip()
-    return None
+        returnValue = ser.readline().decode().strip()
+        print("RECEIVED DATA: " + returnValue)
+        time.sleep(0.1)
+        return returnValue
+    else:
+        return None
 
 
 def save_json_response(response_str, filename="object.JSON"):
@@ -79,8 +81,13 @@ def main():
                 case state.STARTUP:
                     printCurrentState(currentState)
 
-                    # This vision is call is not used but it activates the camera early on in the code
+                    # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
+
+                    # # Used to quickly test communication between Pi and ESP32
+                    # sendCommand("FORWARD")
+                    # time.sleep(1)
+                    # sendCommand("STOP")
                     
                     currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
@@ -124,62 +131,67 @@ def main():
                         query = json.load(input)
                     findObject = query.get("object")
 
+                    # Reset Servo Camera Pan and Tilt positions 
+                    sendCommand("SERVO PAN 0")
+                    time.sleep(1)
+                    sendCommand("SERVO TILT 80")
+                    time.sleep(1)
+
                     swivelCount = 0
                     turnCount = 0
-                    swivelRight = True
-                    sendCommand("SWIVEL_START")
+                    swivelRight = False
 
                     while (1):
-                        [findObject, foundBool, bounding_x, bounding_y] = vision.look_around(findObject)
+                        print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
+                            
+                        if (swivelCount < 20 and swivelRight == True):
+                            servoPosition = sendCommand("SWIVEL_R")
+                            time.sleep(0.5)
+                            swivelCount += 1
+                            print("Servo is at " + servoPosition)
 
+                        elif (swivelCount < 20 and swivelRight == False):
+                            servoPosition = sendCommand("SWIVEL_L")
+                            time.sleep(0.5)
+                            swivelCount += 1
+                            print("Servo is at " + servoPosition)
+
+                        elif (swivelCount >= 3 and turnCount < 3):
+                            # swivelCount must be above 20 so move forward
+                            sendCommand("FORWARD")
+                            time.sleep(1)
+                            swivelRight = not(swivelRight)
+                            swivelCount = 0
+                            turnCount += 1
+                            print("Servo is at " + servoPosition)
+
+                        elif (swivelCount >= 3 and turnCount >= 3):
+                            # swivelCount must be above 20 and moved forward 3 times so turn around
+                            sendCommand("LEFT")
+                            time.sleep(3)
+                            swivelCount = 0
+                            turnCount = 0
+
+                        [findObject, foundBool, bounding_x, bounding_y] = vision.look_around(findObject)
                         print(foundBool)
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
-                            servoPosition = sendCommand("SWIVEL_STOP")
-                            # print("Servo is at " + str(servoPosition))
 
-                            turnWeight = 0.5
+                            turnWeight = 0.1
 
                             # Turn Object based on servo position and turn weight
-                            if (servoPosition < 45):
+                            if (int(servoPosition) < 45):
                                 sendCommand("LEFT")
-                                time.sleep(servoPosition*turnWeight)
+                                time.sleep(float(servoPosition)*turnWeight)
                                 sendCommand("STOP")
                             else:
                                 sendCommand("RIGHT")
-                                time.sleep(servoPosition*turnWeight)
+                                time.sleep(float(servoPosition)*turnWeight)
                                 sendCommand("STOP")
 
                             currentState = state.TRAVEL_TO_OBJ
                             break
-
-                    print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
-                        
-                    if (swivelCount < 3 and swivelRight == True):
-                        sendCommand("SWIVEL_RIGHT")
-                        time.sleep(0.5)
-                        swivelCount += 1
-
-                    elif (swivelCount < 3 and swivelRight == False):
-                        sendCommand("SWIVEL_LEFT")
-                        time.sleep(0.5)
-                        swivelCount += 1
-
-                    elif (swivelCount >= 3 and turnCount < 3):
-                        # swivelCount must be above 20 so move forward
-                        sendCommand("FORWARD")
-                        time.sleep(1)
-                        swivelRight = not(swivelRight)
-                        swivelCount = 0
-                        turnCount += 1
-
-                    elif (swivelCount >= 3 and turnCount >= 3):
-                        # swivelCount must be above 20 and moved forward 3 times so turn around
-                        sendCommand("LEFT")
-                        time.sleep(3)
-                        swivelCount = 0
-                        turnCount = 0
 
                 case state.TRAVEL_TO_OBJ:
                     printCurrentState(currentState)
