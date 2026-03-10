@@ -133,9 +133,13 @@ def main():
 
                     # Reset Servo Camera Pan and Tilt positions 
                     sendCommand("SERVO PAN 0")
-                    time.sleep(1)
+                    time.sleep(5)
                     sendCommand("SERVO TILT 80")
-                    time.sleep(1)
+                    time.sleep(5)
+                    sendCommand("SERVO PICK1 90")
+                    time.sleep(5)
+                    sendCommand("SERVO PICK2 90")
+                    time.sleep(5)
 
                     swivelCount = 0
                     turnCount = 0
