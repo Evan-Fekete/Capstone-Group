@@ -36,11 +36,10 @@ def main():
         send_command("STOP")
         return
 
-    obj, found, bx, by = result
+    obj, found, bx, by, offset_x = result
 
     print(f"before bounding box x: {bx}")
     print(f"before bounding box y: {by}")
-
 
     if found:
         # Step 2: Move toward object
@@ -50,8 +49,20 @@ def main():
             obj, found, bx, by = result
             print(f"bounding box x: {bx}")
             print(f"bounding box y: {by}")
-            print("Moving Forward")
-            send_command("FORWARD")
+            if (offset_x > 0):
+                send_command("LEFT")
+                print("Moving left")
+
+            elif (offset_x < 0):
+                send_command("RIGHT")
+                print("Moving Right")
+
+            else:
+                send_command("FORWARD")
+                print("Moving forward")
+        send_command("SERVO TILT  90")
+        print("Tilting camera")
+
         time.sleep(3)
 
         # Step 3: Stop and pickup

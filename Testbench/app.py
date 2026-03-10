@@ -85,23 +85,24 @@ def look_around(find_object):
 def dimenisons(find_object, class_names, x1, y1, x2, y2):
     bounding_x = int(x2) - int(x1)
     bounding_y = int(y2) - int(y1)
+    offset_x = (int(x2) + int(x1))/2
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
     if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
-        return [True, bounding_x, bounding_y]
+        return [True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names):
         print("You are in front of apple")
-        return [True, bounding_x, bounding_y]
+        return [True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
         print("You are in front of medicine")
-        return [True, bounding_x, bounding_y]
+        return [True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names and 265 < bounding_x and 455 < bounding_y):
         print("You are in front of user")
-        return [True, bounding_x, bounding_y]
+        return [True, bounding_x, bounding_y,offset_x ]
     else:
         print("No object found")
-        return [False, bounding_x, bounding_y]
+        return [False, bounding_x, bounding_y,offset_x ]
 
 
 if __name__ == "__main__":
