@@ -60,7 +60,7 @@ def main():
             else:
                 send_command("FORWARD")
                 print("Moving forward")
-        send_command("SERVO TILT  90")
+        send_command("SERVO TILT 90")
         print("Tilting camera")
 
         time.sleep(3)
