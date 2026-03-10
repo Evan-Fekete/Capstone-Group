@@ -3,7 +3,7 @@
 # Also if you want to connect to Virtual Environment
 # Enter: source /FSMvenv/bin/activate
 
-# Blue Wire: Ground, White Wire: Rx, Black Wire: Tx
+# Blue Wire: Ground (pin 6), White Wire: Rx (pin 8), Black Wire: Tx (pin 10)
 
 import sys
 import os
@@ -81,13 +81,13 @@ def main():
                 case state.STARTUP:
                     printCurrentState(currentState)
 
+                    # Used to quickly test communication between Pi and ESP32
+                    sendCommand("SWIVEL_L")
+                    time.sleep(1)
+                    sendCommand("STOP")
+
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
-
-                    # # Used to quickly test communication between Pi and ESP32
-                    # sendCommand("FORWARD")
-                    # time.sleep(1)
-                    # sendCommand("STOP")
                     
                     currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:

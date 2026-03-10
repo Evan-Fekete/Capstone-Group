@@ -23,7 +23,7 @@ def look_around(find_object):
         model = YOLO("yolo-Weights/NK01_model_v1.pt")
 
         current = time.time()
-        runtime = 10
+        runtime = 0.5
         found_result = [False, 0, 0]  # default if nothing detected
 
         while True:
@@ -76,8 +76,14 @@ def look_around(find_object):
 
         cap.release()
         cv2.destroyAllWindows()
-
-        return [find_object, found_result[0], found_result[1], found_result[2]]
+        print("From appp.py to dimenisons")
+        # print(find_object)
+        # print(found_result[0])
+        # print(found_result[1])
+        # print(found_result[2])
+        # print(found_result[3])
+        # print(found_result[4])
+        return [found_result[0], found_result[1], found_result[2],found_result[3],found_result[4]]
     else:
         print("Object does not exist in this environment")
         return None
@@ -88,21 +94,22 @@ def dimenisons(find_object, class_names, x1, y1, x2, y2):
     offset_x = (int(x2) + int(x1))/2
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
+    print("Offset -->", offset_x)
     if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
-        return [True, bounding_x, bounding_y,offset_x ]
+        return [find_object,True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names):
         print("You are in front of apple")
-        return [True, bounding_x, bounding_y,offset_x ]
+        return [find_object,True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
         print("You are in front of medicine")
-        return [True, bounding_x, bounding_y,offset_x ]
+        return [find_object,True, bounding_x, bounding_y,offset_x ]
     elif (find_object == class_names and 265 < bounding_x and 455 < bounding_y):
         print("You are in front of user")
-        return [True, bounding_x, bounding_y,offset_x ]
+        return [find_object,True, bounding_x, bounding_y,offset_x ]
     else:
         print("No object found")
-        return [False, bounding_x, bounding_y,offset_x ]
+        return [find_object,False, bounding_x, bounding_y,offset_x ]
 
 
 if __name__ == "__main__":

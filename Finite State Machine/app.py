@@ -23,7 +23,7 @@ def look_around(find_object):
         model = YOLO("yolo-Weights/NK01_model_v1.pt")
 
         current = time.time()
-        runtime = 2
+        runtime = 20
         found_result = [False, 0, 0]  # default if nothing detected
 
         while True:
