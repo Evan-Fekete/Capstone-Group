@@ -133,13 +133,13 @@ def main():
 
                     # Reset Servo Camera Pan and Tilt positions 
                     sendCommand("SERVO PAN 0")
-                    time.sleep(3)
-                    sendCommand("SERVO TILT 80")
-                    time.sleep(3)
+                    time.sleep(1)
+                    sendCommand("SERVO TILT 90")
+                    time.sleep(1)
                     sendCommand("SERVO PICK1 90")
-                    time.sleep(3)
+                    time.sleep(1)
                     sendCommand("SERVO PICK2 180")
-                    time.sleep(3)
+                    time.sleep(1)
 
                     swivelCount = 0
                     turnCount = 0
@@ -148,19 +148,19 @@ def main():
                     while (1):
                         print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
                             
-                        if (swivelCount < 50 and swivelRight == True):
+                        if (swivelCount < 60 and swivelRight == True):
                             servoPosition = sendCommand("SWIVEL_R")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
-                        elif (swivelCount < 50 and swivelRight == False):
+                        elif (swivelCount < 60 and swivelRight == False):
                             servoPosition = sendCommand("SWIVEL_L")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
-                        elif (swivelCount >= 50 and turnCount < 3):
+                        elif (swivelCount >= 60 and turnCount < 3):
                             # swivelCount must be above 20 so move forward
                             sendCommand("FORWARD")
                             time.sleep(1)
@@ -169,7 +169,7 @@ def main():
                             turnCount += 1
                             print("Servo is at " + servoPosition)
 
-                        elif (swivelCount >= 50 and turnCount >= 3):
+                        elif (swivelCount >= 60 and turnCount >= 3):
                             # swivelCount must be above 20 and moved forward 3 times so turn around
                             sendCommand("LEFT")
                             time.sleep(3)
@@ -181,16 +181,16 @@ def main():
                         if (foundBool == True):
                             print(findObject + " has been found.")
 
-                            turnWeight = 0.01
+                            turnWeight = 0.005
 
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
                                 sendCommand("RIGHT")
-                                time.sleep(float(servoPosition)*turnWeight)
+                                time.sleep((45 - float(servoPosition))*turnWeight)
                                 sendCommand("STOP")
                             else:
                                 sendCommand("LEFT")
-                                time.sleep(float(servoPosition)*(45-turnWeight))
+                                time.sleep((float(servoPosition) - 45)*turnWeight)
                                 sendCommand("STOP")
 
                             currentState = state.TRAVEL_TO_OBJ
@@ -199,6 +199,10 @@ def main():
                 case state.TRAVEL_TO_OBJ:
                     printCurrentState(currentState)
                     # TODO: Add logic for moving towards object and checking if object is in view if not go back state
+                    # Bools for tilt servo adjustments when approaching the object
+                    firstBool = False
+                    secondBool = False
+                    
                     # load target object
                     with open('object.JSON', 'r') as f:
                         query = json.load(f)
@@ -206,9 +210,9 @@ def main():
                     target = query.get("object")
                     print(f"Looking for: {target}")
 
+                    sendCommand("SERVO TILT 90")
+                    time.sleep(2)
                     sendCommand("SERVO PAN 45")
-                    time.sleep(3)
-                    sendCommand("SERVO TILT 110")
                     time.sleep(3)
 
                     # Look at bounding box to see how far/off target the robot is pointings
@@ -217,27 +221,47 @@ def main():
                     print(f"before while bounding box x: {bx}")
                     print(f"before while bounding box y: {by}")
                     print(f"before while offset: {offset_x}")
-                    while (bx < 95 and by < 95):
+
+                    while (bx < 105 and by < 105):
                         r = vision.look_around(target)
                         obj, found, bx, by , offset_x = r
                         print(f"bounding box x: {bx}")
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
-                        if (offset_x < 295):
+
+                        if ((bx > 50 or by > 50) and firstBool == False):
+                            sendCommand("SERVO TILT 100")
+                            time.sleep(2)
+                            firstBool = True
+
+                        if ((bx > 60 or by > 60) and secondBool == False):
+                            sendCommand("SERVO TILT 110")
+                            time.sleep(2)
+                            secondBool = True
+
+                        if (offset_x < 290):
                             sendCommand("S_LEFT")
+                            time.sleep(0.1)
                             print("Moving left")
 
-                        elif (355 < offset_x):
+                        elif (360 < offset_x):
                             sendCommand("S_RIGHT")
+                            time.sleep(0.1)
                             print("Moving Right")
 
                         else:
                             sendCommand("FORWARD")
+                            time.sleep(0.1)
                             print("Moving forward")
                     sendCommand("STOP")
+
+                    time.sleep(3)
+                    currentState = state.PICKUP_OBJ
                 case state.FIND_USER:
                     printCurrentState(currentState)
                     # TODO Use similar code for FIND_OBJ to find user
+                    
+                    time.sleep(5)
 
                 case state.RETURN_OBJ:
                     printCurrentState(currentState)
@@ -257,6 +281,7 @@ def main():
     except KeyboardInterrupt:
         print("Running interuppted by User")
     finally:
+        sendCommand("STOP")
         print("ENDING...")
 
 

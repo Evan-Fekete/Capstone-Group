@@ -93,7 +93,7 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
         print("You are in front of mug")
         return [find_object,True, bounding_x, bounding_y, offset_x ]
     
-    elif (find_object == class_names and 295 < offset_x and offset_x < 355):
+    elif (find_object == class_names and 290 < offset_x and offset_x < 360):
         print("You are in front of apple")
         return [find_object,True, bounding_x, bounding_y, offset_x ]
     
