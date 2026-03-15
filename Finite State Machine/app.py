@@ -4,7 +4,8 @@ import math
 import time
 import json
 
-runtime = 0.5
+runtime = 10
+
 
 def look_around(find_object):
     class_names = ["apple", "medicine", "mug", "remote", "shoe", "user"]
@@ -13,18 +14,19 @@ def look_around(find_object):
         # start webcam
 
         # Uncomment for Linux
-        cap = cv2.VideoCapture(0)
+        # cap = cv2.VideoCapture(0)
 
         # # Uncomment for Windows
-        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
         cap.set(3, 640)
         cap.set(4, 480)
         # model
-        model = YOLO("yolo-Weights/NK01_model_v1.pt")
+        model = YOLO("yolo-Weights/NK01_model_v2.pt")
 
         current = time.time()
-        found_object, foundBool, bx, by, offset = [0, False, 0, 0, 0]  # default if nothing detected
+        found_object, foundBool, bx, by, offset = [
+            0, False, 0, 0, 0]  # default if nothing detected
 
         while True:
 
@@ -45,15 +47,17 @@ def look_around(find_object):
                         x2), int(y2)  # convert to int values
                     cls = int(box.cls[0])
 
+                    # class name
+                    print("Class name -->", class_names[cls])
+                    if (class_names[cls] != find_object):
+                        continue
+
                     # put box in cam
                     cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
 
                     # confidence
                     confidence = math.ceil((box.conf[0]*100))/100
                     print("Confidence --->", confidence)
-
-                    # class name
-                    print("Class name -->", class_names[cls])
 
                     # Dimensions
                     found_object, foundBool, bx, by, offset = dimensions(
@@ -82,6 +86,7 @@ def look_around(find_object):
         print("Object does not exist in this environment")
         return [None, False, 0, 0, 0]
 
+
 def dimensions(find_object, class_names, x1, y1, x2, y2):
     bounding_x = int(x2) - int(x1)
     bounding_y = int(y2) - int(y1)
@@ -89,29 +94,36 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
     print("Offset -->", offset_x)
-    if (find_object == class_names and 355 < bounding_x and 306 < bounding_y):
+    if (find_object == "mug" and find_object == class_names and 355 < bounding_x and 306 < bounding_y):
         print("You are in front of mug")
-        return [find_object,True, bounding_x, bounding_y, offset_x ]
-    
-    elif (find_object == class_names and 290 < offset_x and offset_x < 360):
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
+    elif (find_object == "apple" and find_object == class_names and 290 < offset_x and offset_x < 360):
         print("You are in front of apple")
-        return [find_object,True, bounding_x, bounding_y, offset_x ]
-    
-    elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
+    elif (find_object == "medicine" and find_object == class_names and 217 < bounding_x and 365 < bounding_y):
         print("You are in front of medicine")
-        return [find_object,True, bounding_x, bounding_y, offset_x ]
-    
-    elif (find_object == class_names and 265 < bounding_x and 455 < bounding_y):
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
+    elif (find_object == "user" and find_object == class_names and 265 < bounding_x and 455 < bounding_y):
         print("You are in front of user")
-        return [find_object,True, bounding_x, bounding_y, offset_x ]
-    
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
+    elif (find_object == "remote" and find_object == class_names and 290 < offset_x and offset_x < 360):
+        print("You are in front of remote")
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
+    elif (find_object == "shoe" and find_object == class_names and 290 < offset_x and offset_x < 360):
+        print("You are in front of shoe")
+        return [find_object, True, bounding_x, bounding_y, offset_x]
+
     else:
-        print("No object found")
-        return [find_object,False, bounding_x, bounding_y, offset_x ]
+        print("Not in front object")
+        return [find_object, False, bounding_x, bounding_y, offset_x]
 
 
 if __name__ == "__main__":
     with open('object.JSON', 'r') as input:
         query = json.load(input)
-    runtime = 20
     look_around(query.get("object"))
