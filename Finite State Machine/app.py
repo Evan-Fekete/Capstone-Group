@@ -4,7 +4,7 @@ import math
 import time
 import json
 
-runtime = 0.5
+runtime = 1
 
 def look_around(find_object):
     class_names = ["apple", "medicine", "mug", "remote", "shoe", "user"]
@@ -97,7 +97,7 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
         print("You are in front of apple")
         return [find_object,True, bounding_x, bounding_y, offset_x ]
     
-    elif (find_object == class_names and 217 < bounding_x and 365 < bounding_y):
+    elif (find_object == class_names and 290 < offset_x and offset_x < 360):
         print("You are in front of medicine")
         return [find_object,True, bounding_x, bounding_y, offset_x ]
     
@@ -113,5 +113,5 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
 if __name__ == "__main__":
     with open('object.JSON', 'r') as input:
         query = json.load(input)
-    runtime = 20
+    runtime = 100000
     look_around(query.get("object"))
