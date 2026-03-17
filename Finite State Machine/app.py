@@ -4,7 +4,7 @@ import math
 import time
 import json
 
-runtime = 10
+runtime = 1.5
 
 
 def look_around(find_object):
@@ -14,10 +14,10 @@ def look_around(find_object):
         # start webcam
 
         # Uncomment for Linux
-        # cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)
 
         # # Uncomment for Windows
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
         cap.set(3, 640)
         cap.set(4, 480)
@@ -49,8 +49,8 @@ def look_around(find_object):
 
                     # class name
                     print("Class name -->", class_names[cls])
-                    if (class_names[cls] != find_object):
-                        continue
+                    # if (class_names[cls] != find_object):
+                    #     continue
 
                     # put box in cam
                     cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
@@ -94,7 +94,7 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
     print("Offset -->", offset_x)
-    if (find_object == "mug" and find_object == class_names and 355 < bounding_x and 306 < bounding_y):
+    if (find_object == "mug" and find_object == class_names and 305 < offset_x and offset_x < 345):
         print("You are in front of mug")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
@@ -102,7 +102,7 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
         print("You are in front of apple")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "medicine" and find_object == class_names and 217 < bounding_x and 365 < bounding_y):
+    elif (find_object == "medicine" and find_object == class_names and 310 < offset_x and offset_x < 340):
         print("You are in front of medicine")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
@@ -126,4 +126,5 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
 if __name__ == "__main__":
     with open('object.JSON', 'r') as input:
         query = json.load(input)
+    runtime = 10000
     look_around(query.get("object"))

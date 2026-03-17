@@ -3,7 +3,7 @@
 # Also if you want to connect to Virtual Environment
 # Enter: source /FSMvenv/bin/activate
 
-# Blue Wire: Ground (pin 6), White Wire: Rx (pin 10), Black Wire: Tx (pin 8)
+# Blue Wire: Ground (pin 6), Black Wire: Tx (pin 8), White Wire: Rx (pin 10)
 
 import sys
 import os
@@ -89,7 +89,7 @@ def main():
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
                     
-                    currentState = state.TAKE_INSTRUCTION
+                    currentState = state.TRAVEL_TO_OBJ
                     # currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
@@ -97,7 +97,7 @@ def main():
                     # audio = speech.record_audio()
                     # user_input = speech.transcribe_audio(audio)
                     # Uncomment to define user input
-                    user_input = "Bring me the medicine"
+                    user_input = "Bring me the mug"
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
                         Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
@@ -132,7 +132,7 @@ def main():
                     findObject = query.get("object")
 
                     # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 0")
+                    sendCommand("SERVO PAN 45")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
@@ -190,7 +190,7 @@ def main():
                                 sendCommand("STOP")
                             else:
                                 sendCommand("LEFT")
-                                time.sleep((float(servoPosition) - 45)*turnWeight)
+                                time.sleep((float(servoPosition) - 40)*turnWeight)
                                 sendCommand("STOP")
 
                             currentState = state.TRAVEL_TO_OBJ
@@ -210,10 +210,56 @@ def main():
                     print(f"Looking for: {target}")
 
                     if (target == "medicine"):
-                        desiredBx = 70
-                        desiredBy = 115
-                        desiredOffsetMax = 330 # 322 is generally centred
-                        desiredOffsetMin = 310
+                        desiredBx = 65
+                        desiredBy = 105
+                        desiredOffsetMax = 327 # 322 is generally centred for medicine
+                        desiredOffsetMin = 317
+
+                    
+                    if (target == "mug"):
+                        desiredBx = 133
+                        desiredBy = 122
+                        desiredOffsetMax = 350 # 347 is generally centred for mug
+                        desiredOffsetMin = 325
+                        #angled
+                        desiredBx_ang = 94
+                        desiredBy_ang = 119
+                        desiredOffsetMax_ang = 335 # 332 is generally centred for angled mug
+                        desiredOffsetMin_ang = 322
+
+                    if (target == "remote"):
+                        desiredBx = 155
+                        desiredBy = 35
+                        desiredOffsetMax = 333 # 330 is generally centred for remote
+                        desiredOffsetMin = 320
+                        #angled
+                        # desiredBx_ang = 94
+                        # desiredBy_ang = 119
+                        # desiredOffsetMax_ang = 335 # 330 is generally centred for angled remote
+                        # desiredOffsetMin_ang = 322
+
+                    if (target == "shoe"):
+                        desiredBx = 132
+                        desiredBy = 118
+                        desiredOffsetMax = 341 # 338 is generally centred for shoe
+                        desiredOffsetMin = 328
+                        #angled
+                        desiredBx_ang = 138
+                        desiredBy_ang = 102
+                        desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
+                        desiredOffsetMin_ang = 323
+
+                    if (target == "user"):
+                        desiredBx = 114
+                        desiredBy = 198
+                        desiredOffsetMax = 333 # 330 is generally centred for user
+                        desiredOffsetMin = 320
+                        #angled
+                        # desiredBx_ang = 138
+                        # desiredBy_ang = 102
+                        # desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
+                        # desiredOffsetMin_ang = 323
+
 
                     sendCommand("SERVO TILT 90")
                     time.sleep(2)
@@ -236,12 +282,11 @@ def main():
 
                         if ((bx > 70 or by > 70) and firstBool == False):
                             sendCommand("SERVO TILT 100")
-                            time.sleep(3)
+                            time.sleep(5)
                             firstBool = True
 
-                        elif (bx > 95 or by > 95 and secondBool == False):
-                            sendCommand("SERVO TILT 110")
-                            time.sleep(7)
+                        elif ((bx > 90 or by > 90) and secondBool == False):
+                            time.sleep(1)
                             secondBool = True
 
                         elif (offset_x < desiredOffsetMin - 30):
@@ -249,19 +294,19 @@ def main():
                             time.sleep(1)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 30 < offset_x):
+                        elif (desiredOffsetMax + 30 < offset_x ):
                             sendCommand("M_RIGHT")
                             time.sleep(1)
                             print("Moving Right")
 
                         elif (offset_x < desiredOffsetMin):
                             sendCommand("S_LEFT")
-                            time.sleep(0.5)
+                            time.sleep(1)
                             print("Moving left")
 
                         elif (desiredOffsetMax < offset_x):
                             sendCommand("S_RIGHT")
-                            time.sleep(0.5)
+                            time.sleep(1)
                             print("Moving Right")
 
                         elif (secondBool == True):
@@ -270,7 +315,7 @@ def main():
                             print("Moving forward slowly")
                         else:
                             sendCommand("FORWARD")
-                            time.sleep(0.5)
+                            time.sleep(1)
                             print("Moving forward")
                     sendCommand("STOP")
 
@@ -380,12 +425,12 @@ def main():
 
                         if ((bx > 50 or by > 50) and firstBool == False):
                             sendCommand("SERVO TILT 100")
-                            time.sleep(2)
+                            time.sleep(5)
                             firstBool = True
 
                         if ((bx > 70 or by > 70) and secondBool == False):
                             sendCommand("SERVO TILT 110")
-                            time.sleep(2)
+                            time.sleep(5)
                             secondBool = True
 
                         if (offset_x < 300): # 322 is generally completely centred for medicine bottle
