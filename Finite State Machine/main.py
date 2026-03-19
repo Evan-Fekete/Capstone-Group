@@ -455,10 +455,11 @@ def main():
                 case state.PICKUP_OBJ:
                     printCurrentState(currentState)
 
-                    # sendCommand("PICKUP")
+                    sendCommand("PICKUP")
                     time.sleep(10)
 
-                    currentState = state.PICKUP_OBJ
+                    currentState = state.FIND_USER
+
 
                 case _:
                     print("Current State: UNKNOWN STATE")
