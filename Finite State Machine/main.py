@@ -89,7 +89,7 @@ def main():
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
                     
-                    currentState = state.TAKE_INSTRUCTION
+                    currentState = state.FIND_USER
                     # currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
@@ -115,16 +115,15 @@ def main():
                     json_data = save_json_response(reply)
                     print("JSON Data: " + str(json_data))
 
-                    currentState = state.FIND_OBJ
+                    currentState = state.FIND_USER
                     time.sleep(5)
 
                 case state.FIND_OBJ:
-                    # This state will move robot forward (or some predefined sequence of movments)
-                    # Swivel camera nad look for object, if found stop the swiveling save servo position
+                    # This state will look around, move forward and then turn 90 degrees, and then repeat
+                    # Swivel camera and look for object, if found stop the swiveling save servo position
                     # based on servo position turn car (turn for servoPosition*turnWeight)
                     # After this the robot should ideally be facing the object, now it will move forward
 
-                    # TODO: determine a good turnWeight for the robot
                     printCurrentState(currentState)
 
                     with open('object.JSON', 'r') as input:
@@ -146,35 +145,30 @@ def main():
                     swivelRight = False
 
                     while (1):
-                        print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
-                            
-                        if (swivelCount < 60 and swivelRight == True):
+                        print("Swivel Count: " + str(swivelCount))
+
+                        if (swivelCount >= 30):
+                            # Move forward about a foot and then do a 90 degree turn
+                            sendCommand("FORWARD")
+                            time.sleep(1)
+
+                            sendCommand("LEFT")
+                            time.sleep(0.75)
+                            sendCommand("STOP")
+                            swivelCount = 0
+                            swivelRight = not swivelRight
+
+                        if (swivelCount < 30 and swivelRight == True):
                             servoPosition = sendCommand("SWIVEL_R")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
-                        elif (swivelCount < 60 and swivelRight == False):
+                        elif (swivelCount < 30 and swivelRight == False):
                             servoPosition = sendCommand("SWIVEL_L")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
-
-                        elif (swivelCount >= 60 and turnCount < 3):
-                            # swivelCount must be above 20 so move forward
-                            sendCommand("FORWARD")
-                            time.sleep(1)
-                            swivelRight = not(swivelRight)
-                            swivelCount = 0
-                            turnCount += 1
-                            print("Servo is at " + servoPosition)
-
-                        elif (swivelCount >= 60 and turnCount >= 3):
-                            # swivelCount must be above 20 and moved forward 3 times so turn around
-                            sendCommand("LEFT")
-                            time.sleep(3)
-                            swivelCount = 0
-                            turnCount = 0
 
                         [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
 
@@ -190,9 +184,10 @@ def main():
                                 sendCommand("STOP")
                             else:
                                 sendCommand("LEFT")
-                                time.sleep((float(servoPosition) - 40)*turnWeight)
+                                time.sleep((float(servoPosition) - 45)*turnWeight)
                                 sendCommand("STOP")
 
+                            time.sleep(2)
                             currentState = state.TRAVEL_TO_OBJ
                             break
 
@@ -323,6 +318,10 @@ def main():
                             sendCommand("SLOW_FORWARD")
                             time.sleep(2)
                             print("Moving forward slowly")
+                        elif (bx == 0 and by == 0):
+                            time.sleep(5)
+                            print("OBJECT HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
+                            currentState = state.FIND_OBJ
                         else:
                             sendCommand("FORWARD")
                             time.sleep(1)
@@ -342,11 +341,11 @@ def main():
                     findObject = "user"
 
                     # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 0")
+                    sendCommand("SERVO PAN 45")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
-                    sendCommand("SERVO PICK1 90")
+                    sendCommand("SERVO PICK1 0")
                     time.sleep(1)
                     sendCommand("SERVO PICK2 180")
                     time.sleep(1)
@@ -356,35 +355,32 @@ def main():
                     swivelRight = False
 
                     while (1):
-                        print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
+                        print("Swivel Count: " + str(swivelCount))
                             
-                        if (swivelCount < 60 and swivelRight == True):
+                        if (swivelCount < 30 and swivelRight == True):
                             servoPosition = sendCommand("SWIVEL_R")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
-                        elif (swivelCount < 60 and swivelRight == False):
+                        elif (swivelCount < 30 and swivelRight == False):
                             servoPosition = sendCommand("SWIVEL_L")
                             time.sleep(0.5)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
-                        elif (swivelCount >= 60 and turnCount < 3):
-                            # swivelCount must be above 20 so move forward
-                            sendCommand("FORWARD")
-                            time.sleep(1)
-                            swivelRight = not(swivelRight)
-                            swivelCount = 0
-                            turnCount += 1
-                            print("Servo is at " + servoPosition)
+                        elif (swivelCount >= 30):
+                                print("User has been found turning")
+                                # Move forward about a foot and then do a 90 degree turn
+                                
+                                sendCommand("FORWARD")
+                                time.sleep(1)
 
-                        elif (swivelCount >= 60 and turnCount >= 3):
-                            # swivelCount must be above 20 and moved forward 3 times so turn around
-                            sendCommand("LEFT")
-                            time.sleep(3)
-                            swivelCount = 0
-                            turnCount = 0
+                                sendCommand("LEFT")
+                                time.sleep(2)
+                                sendCommand("STOP")
+                                swivelCount = 0
+                                swivelRight = not swivelRight
 
                         [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
 
@@ -402,17 +398,31 @@ def main():
                                 sendCommand("LEFT")
                                 time.sleep((float(servoPosition) - 45)*turnWeight)
                                 sendCommand("STOP")
-
-                    time.sleep(5)
+                        
+                            time.sleep(2)
+                            currentState = state.RETURN_OBJ
+                            break
 
                 case state.RETURN_OBJ:
                     printCurrentState(currentState)
-
+                    # Bools for tilt servo adjustments when approaching the object
                     firstBool = False
                     secondBool = False
-                    
+
                     target = "user"
                     print(f"Looking for: {target}")
+
+                    if (target == "user"):
+                        desiredBx = 114
+                        desiredBy = 198
+                        desiredOffsetMax = 363 # 330 is generally centred for user
+                        desiredOffsetMin = 320
+                        #angled
+                        # desiredBx_ang = 138
+                        # desiredBy_ang = 102
+                        # desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
+                        # desiredOffsetMin_ang = 323
+
 
                     sendCommand("SERVO TILT 90")
                     time.sleep(2)
@@ -426,41 +436,71 @@ def main():
                     print(f"before while bounding box y: {by}")
                     print(f"before while offset: {offset_x}")
 
-                    while (bx < 105 and by < 105):
+                    while (bx < desiredBx and by < desiredBy):
                         r = vision.look_around(target)
                         obj, found, bx, by , offset_x = r
                         print(f"bounding box x: {bx}")
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
 
-                        if ((bx > 50 or by > 50) and firstBool == False):
+                        if ((bx > 70 or by > 70) and firstBool == False):
                             sendCommand("SERVO TILT 100")
                             time.sleep(5)
                             firstBool = True
 
-                        if ((bx > 70 or by > 70) and secondBool == False):
-                            sendCommand("SERVO TILT 110")
-                            time.sleep(5)
+                        elif ((bx > 90 or by > 90) and secondBool == False):
+                            time.sleep(1)
                             secondBool = True
 
-                        if (offset_x < 300): # 322 is generally completely centred for medicine bottle
-                            sendCommand("S_LEFT")
-                            time.sleep(0.1)
-                            print("Moving left")
+                        elif (offset_x < desiredOffsetMin - 100):
+                            sendCommand("L_LEFT")
+                            time.sleep(1)
+                            print("Moving Left")
 
-                        elif (340 < offset_x):
-                            sendCommand("S_RIGHT")
-                            time.sleep(0.1)
+                        elif (desiredOffsetMax + 100 < offset_x ):
+                            sendCommand("L_RIGHT")
+                            time.sleep(1)
                             print("Moving Right")
 
+                        elif (offset_x < desiredOffsetMin - 30):
+                            sendCommand("M_LEFT")
+                            time.sleep(1)
+                            print("Moving Left")
+
+                        elif (desiredOffsetMax + 30 < offset_x ):
+                            sendCommand("M_RIGHT")
+                            time.sleep(1)
+                            print("Moving Right")
+
+                        elif (offset_x < desiredOffsetMin):
+                            sendCommand("S_LEFT")
+                            time.sleep(1)
+                            print("Moving left")
+
+                        elif (desiredOffsetMax < offset_x):
+                            sendCommand("S_RIGHT")
+                            time.sleep(1)
+                            print("Moving Right")
+
+                        elif (secondBool == True):
+                            sendCommand("SLOW_FORWARD")
+                            time.sleep(2)
+                            print("Moving forward slowly")
+                        elif (bx == 0 and by == 0):
+                            time.sleep(5)
+                            print("USER HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
+                            currentState = state.FIND_USER
                         else:
                             sendCommand("FORWARD")
-                            time.sleep(0.1)
+                            time.sleep(1)
                             print("Moving forward")
                     sendCommand("STOP")
 
                     time.sleep(3)
-                    currentState = state.TAKE_INSTRUCTION
+
+                    while(1):
+                        print("End of go to user test run")
+                        time.sleep(3)
 
                 case state.PICKUP_OBJ:
                     printCurrentState(currentState)
