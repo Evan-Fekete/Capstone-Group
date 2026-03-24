@@ -4,7 +4,7 @@ import math
 import time
 import json
 
-runtime = 1.5
+runtime = 5
 
 
 def look_around(find_object):

@@ -89,7 +89,7 @@ def main():
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
                     
-                    currentState = state.TRAVEL_TO_OBJ
+                    currentState = state.TAKE_INSTRUCTION
                     # currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
@@ -97,7 +97,7 @@ def main():
                     # audio = speech.record_audio()
                     # user_input = speech.transcribe_audio(audio)
                     # Uncomment to define user input
-                    user_input = "Bring me the mug"
+                    user_input = "Bring me the medicine"
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
                         Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
@@ -132,11 +132,11 @@ def main():
                     findObject = query.get("object")
 
                     # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 45")
+                    sendCommand("SERVO PAN 0")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
-                    sendCommand("SERVO PICK1 90")
+                    sendCommand("SERVO PICK1 0")
                     time.sleep(1)
                     sendCommand("SERVO PICK2 180")
                     time.sleep(1)
@@ -288,6 +288,16 @@ def main():
                         elif ((bx > 90 or by > 90) and secondBool == False):
                             time.sleep(1)
                             secondBool = True
+
+                        elif (offset_x < desiredOffsetMin - 100):
+                            sendCommand("L_LEFT")
+                            time.sleep(1)
+                            print("Moving Left")
+
+                        elif (desiredOffsetMax + 100 < offset_x ):
+                            sendCommand("L_RIGHT")
+                            time.sleep(1)
+                            print("Moving Right")
 
                         elif (offset_x < desiredOffsetMin - 30):
                             sendCommand("M_LEFT")
@@ -456,8 +466,11 @@ def main():
                     printCurrentState(currentState)
 
                     sendCommand("PICKUP")
-                    time.sleep(10)
+                    time.sleep(15)
 
+                    while (1):
+                        print("End of test run")
+                        time.sleep(3)
                     currentState = state.FIND_USER
 
 
