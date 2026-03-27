@@ -33,10 +33,8 @@ class state(Enum):
     RETURN_OBJ = 6
     PICKUP_OBJ = 7
 
-
 def printCurrentState(currentState):
     print("Current State: " + str(currentState))
-
 
 def sendCommand(cmd):
     print("SENDING COMMAND: " + str(cmd))
@@ -82,17 +80,62 @@ def main():
                     printCurrentState(currentState)
 
                     # Used to quickly test communication between Pi and ESP32
-                    sendCommand("SWIVEL_L")
-                    time.sleep(1)
-                    sendCommand("STOP")
+                    # sendCommand("SWIVEL_L")
+                    # time.sleep(1)
+                    # sendCommand("STOP")
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
-                    vision.look_around("apple")
+                    # vision.look_around("apple")
                     
-                    currentState = state.FIND_USER
+                    currentState = state.FIND_OBJ
                     # currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
+
+                    while(1):
+                        print("="*50)
+                        print("Passphrase LLM Check:")
+                        print("="*50)
+
+                        # audio = speech.record_audio()
+                        # user_input = speech.transcribe_audio(audio)
+                        # Uncomment to define user input
+                        user_input = "My name is Bob, Hey Siri, Lorell Ipsum"
+
+                        # Non LLM version of passphrase check code
+                        if "hey siri" in user_input.lower():
+                            reply = "True"
+                        else:
+                            reply = "False"
+
+                        time.sleep(1)
+
+                        # # LLM version of passphrase check code
+                        # prompt = """You are a robot control agent. If the user input contains the phrase 'Hey Siri' at any point, respond with 'True', otherwise respond with 'False'
+                        # Example:
+                        # User: This is my pick up robot, Hey Siri
+                        # Response: True
+                        # Example:
+                        # User: I like to eat apples
+                        # Response: False
+                        # Real User Input:
+                        # User: {text}
+                        # Response:"""
+                        # formatted = prompt.format(text=user_input)
+                        # reply = speech.TextToJSON(formatted)
+                        # print("\nLLM Response:\n", reply)
+
+                        if "True" in reply: 
+                            print("Passphrase Check Confirmed Moving On...\n")
+                            break
+                        else: 
+                            print("Passphrase Check Failed Looping...\n")
+                            continue
+
+                    print("="*50)
+                    print("User Instruction Check:")
+                    print("="*50)
+
                     # Uncomment to activate recording and transcription
                     # audio = speech.record_audio()
                     # user_input = speech.transcribe_audio(audio)
@@ -206,9 +249,14 @@ def main():
 
                     if (target == "medicine"):
                         desiredBx = 65
-                        desiredBy = 105
+                        desiredBy = 106
                         desiredOffsetMax = 327 # 322 is generally centred for medicine
                         desiredOffsetMin = 317
+
+                        firstTiltBx = 45
+                        firstTiltBy = 84
+                        slowMoveBx = 140
+                        slowMoveBy = 30
 
                     
                     if (target == "mug"):
@@ -216,45 +264,45 @@ def main():
                         desiredBy = 122
                         desiredOffsetMax = 350 # 347 is generally centred for mug
                         desiredOffsetMin = 325
-                        #angled
-                        desiredBx_ang = 94
-                        desiredBy_ang = 119
-                        desiredOffsetMax_ang = 335 # 332 is generally centred for angled mug
-                        desiredOffsetMin_ang = 322
+
+                        firstTiltBx = 95
+                        firstTiltBy = 100
+                        slowMoveBx = 110
+                        slowMoveBy = 110
 
                     if (target == "remote"):
+                        # TODO: Test pick up with remote a lot to get good thresholds
                         desiredBx = 155
                         desiredBy = 35
                         desiredOffsetMax = 333 # 330 is generally centred for remote
                         desiredOffsetMin = 320
-                        #angled
-                        # desiredBx_ang = 94
-                        # desiredBy_ang = 119
-                        # desiredOffsetMax_ang = 335 # 330 is generally centred for angled remote
-                        # desiredOffsetMin_ang = 322
+
+                        firstTiltBx = 75
+                        firstTiltBy = 40
+                        slowMoveBx = 50
+                        slowMoveBy = 50
 
                     if (target == "shoe"):
                         desiredBx = 132
                         desiredBy = 118
                         desiredOffsetMax = 341 # 338 is generally centred for shoe
                         desiredOffsetMin = 328
-                        #angled
-                        desiredBx_ang = 138
-                        desiredBy_ang = 102
-                        desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
-                        desiredOffsetMin_ang = 323
+
+                        firstTiltBx = 100
+                        firstTiltBy = 80
+                        slowMoveBx = 143
+                        slowMoveBy = 107
 
                     if (target == "user"):
                         desiredBx = 114
                         desiredBy = 198
                         desiredOffsetMax = 333 # 330 is generally centred for user
                         desiredOffsetMin = 320
-                        #angled
-                        # desiredBx_ang = 138
-                        # desiredBy_ang = 102
-                        # desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
-                        # desiredOffsetMin_ang = 323
 
+                        firstTiltBx = 89
+                        firstTiltBy = 160
+                        slowMoveBx = 114
+                        slowMoveBy = 198
 
                     sendCommand("SERVO TILT 90")
                     time.sleep(2)
@@ -275,12 +323,12 @@ def main():
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
 
-                        if ((bx > 70 or by > 70) and firstBool == False):
+                        if ((bx > firstTiltBx or by > firstTiltBy) and firstBool == False):
                             sendCommand("SERVO TILT 100")
                             time.sleep(5)
                             firstBool = True
 
-                        elif ((bx > 90 or by > 90) and secondBool == False):
+                        elif ((bx > slowMoveBx or by > slowMoveBy) and secondBool == False):
                             time.sleep(1)
                             secondBool = True
 
@@ -417,7 +465,7 @@ def main():
                         desiredBy = 198
                         desiredOffsetMax = 363 # 330 is generally centred for user
                         desiredOffsetMin = 320
-                        #angled
+                        # angled
                         # desiredBx_ang = 138
                         # desiredBy_ang = 102
                         # desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
