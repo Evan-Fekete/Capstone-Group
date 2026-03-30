@@ -14,6 +14,7 @@ import serial
 import SpeechToText as speech
 import app as vision
 from enum import Enum
+from gpiozero import LED
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,15 +81,19 @@ def main():
                     printCurrentState(currentState)
 
                     # Used to quickly test communication between Pi and ESP32
-                    # sendCommand("SWIVEL_L")
-                    # time.sleep(1)
-                    # sendCommand("STOP")
+                    sendCommand("SWIVEL_L")
+                    time.sleep(1)
+                    sendCommand("STOP")
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
-                    # vision.look_around("apple")
+                    vision.look_around("apple")
                     
+                    # Activate LEDs
+                    instructionLED = LED(17)
+
+                    # currentState = state.TRAVEL_TO_OBJ
                     currentState = state.FIND_OBJ
-                    # currentState = state.TAKE_INSTRUCTION
+
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
 
@@ -100,6 +105,7 @@ def main():
                         # audio = speech.record_audio()
                         # user_input = speech.transcribe_audio(audio)
                         # Uncomment to define user input
+                        time.sleep(1)
                         user_input = "My name is Bob, Hey Siri, Lorell Ipsum"
 
                         # Non LLM version of passphrase check code
@@ -136,11 +142,19 @@ def main():
                     print("User Instruction Check:")
                     print("="*50)
 
+                    # LED signifies Pi is recording user instructions
+                    instructionLED.on()
+
                     # Uncomment to activate recording and transcription
                     # audio = speech.record_audio()
                     # user_input = speech.transcribe_audio(audio)
                     # Uncomment to define user input
                     user_input = "Bring me the medicine"
+                    time.sleep(1)
+                    
+                    # Turn off LED to show PI is done recording instructions
+                    instructionLED.off()
+
                     # JSON Schema prompt used to return JSON schema for vision system
                     prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
                         Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
@@ -158,8 +172,9 @@ def main():
                     json_data = save_json_response(reply)
                     print("JSON Data: " + str(json_data))
 
-                    currentState = state.FIND_USER
-                    time.sleep(5)
+                    time.sleep(1)
+                    currentState = state.FIND_OBJ
+                    time.sleep(2)
 
                 case state.FIND_OBJ:
                     # This state will look around, move forward and then turn 90 degrees, and then repeat
@@ -196,7 +211,7 @@ def main():
                             time.sleep(1)
 
                             sendCommand("LEFT")
-                            time.sleep(0.75)
+                            time.sleep(0.5)
                             sendCommand("STOP")
                             swivelCount = 0
                             swivelRight = not swivelRight
@@ -218,7 +233,7 @@ def main():
                         if (foundBool == True):
                             print(findObject + " has been found.")
 
-                            turnWeight = 0.005
+                            turnWeight = 0.015
 
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
@@ -248,27 +263,26 @@ def main():
                     print(f"Looking for: {target}")
 
                     if (target == "medicine"):
-                        desiredBx = 65
-                        desiredBy = 106
-                        desiredOffsetMax = 327 # 322 is generally centred for medicine
-                        desiredOffsetMin = 317
+                        desiredBx = 55
+                        desiredBy = 105
+                        desiredOffsetMax = 320
+                        desiredOffsetMin = 300
 
-                        firstTiltBx = 45
-                        firstTiltBy = 84
-                        slowMoveBx = 140
-                        slowMoveBy = 30
-
+                        firstTiltBx = 30
+                        firstTiltBy = 70
+                        slowMoveBx = 45
+                        slowMoveBy = 75
                     
                     if (target == "mug"):
-                        desiredBx = 133
-                        desiredBy = 122
-                        desiredOffsetMax = 350 # 347 is generally centred for mug
-                        desiredOffsetMin = 325
+                        desiredBx = 105
+                        desiredBy = 110
+                        desiredOffsetMax = 307
+                        desiredOffsetMin = 301
 
-                        firstTiltBx = 95
-                        firstTiltBy = 100
-                        slowMoveBx = 110
-                        slowMoveBy = 110
+                        firstTiltBx = 60
+                        firstTiltBy = 90
+                        slowMoveBx = 75
+                        slowMoveBy = 80
 
                     if (target == "remote"):
                         # TODO: Test pick up with remote a lot to get good thresholds
@@ -304,10 +318,16 @@ def main():
                         slowMoveBx = 114
                         slowMoveBy = 198
 
-                    sendCommand("SERVO TILT 90")
-                    time.sleep(2)
+                    leftView = False
+
+                    # sendCommand("SERVO TILT 90")
+                    # time.sleep(2)
                     sendCommand("SERVO PAN 45")
                     time.sleep(3)
+                    # sendCommand("SERVO PICK1 0")
+                    # time.sleep(8)
+                    # sendCommand("SERVO PICK2 180")
+                    # time.sleep(8)
 
                     # Look at bounding box to see how far/off target the robot is pointings
                     result = vision.look_around(target)
@@ -315,6 +335,8 @@ def main():
                     print(f"before while bounding box x: {bx}")
                     print(f"before while bounding box y: {by}")
                     print(f"before while offset: {offset_x}")
+
+                    if (bx != 0 or by != 0): leftView = False
 
                     while (bx < desiredBx and by < desiredBy):
                         r = vision.look_around(target)
@@ -328,28 +350,34 @@ def main():
                             time.sleep(5)
                             firstBool = True
 
-                        elif ((bx > slowMoveBx or by > slowMoveBy) and secondBool == False):
+                        elif ((bx > slowMoveBx or by > slowMoveBy) and secondBool == False and firstBool == True):
                             time.sleep(1)
                             secondBool = True
+                        elif (bx == 0 and by == 0):
+                            # Has object left the view, if so return to find object state
+                            time.sleep(5)
+                            print("OBJECT HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
+                            leftView = True
+                            continue
 
                         elif (offset_x < desiredOffsetMin - 100):
                             sendCommand("L_LEFT")
-                            time.sleep(1)
+                            time.sleep(2)
                             print("Moving Left")
 
                         elif (desiredOffsetMax + 100 < offset_x ):
                             sendCommand("L_RIGHT")
-                            time.sleep(1)
+                            time.sleep(2)
                             print("Moving Right")
 
-                        elif (offset_x < desiredOffsetMin - 30):
+                        elif (offset_x < desiredOffsetMin - 20):
                             sendCommand("M_LEFT")
-                            time.sleep(1)
+                            time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 30 < offset_x ):
+                        elif (desiredOffsetMax + 20 < offset_x):
                             sendCommand("M_RIGHT")
-                            time.sleep(1)
+                            time.sleep(2)
                             print("Moving Right")
 
                         elif (offset_x < desiredOffsetMin):
@@ -366,10 +394,6 @@ def main():
                             sendCommand("SLOW_FORWARD")
                             time.sleep(2)
                             print("Moving forward slowly")
-                        elif (bx == 0 and by == 0):
-                            time.sleep(5)
-                            print("OBJECT HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
-                            currentState = state.FIND_OBJ
                         else:
                             sendCommand("FORWARD")
                             time.sleep(1)
@@ -377,7 +401,10 @@ def main():
                     sendCommand("STOP")
 
                     time.sleep(3)
-                    currentState = state.PICKUP_OBJ
+
+                    if (leftView == True): currentState = state.FIND_OBJ
+                    else: currentState = state.PICKUP_OBJ
+
                 case state.FIND_USER:
                     # This state will move robot forward (or some predefined sequence of movments)
                     # Swivel camera and look for the user, if found stop the swiveling save servo position
@@ -389,14 +416,14 @@ def main():
                     findObject = "user"
 
                     # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 45")
-                    time.sleep(1)
-                    sendCommand("SERVO TILT 90")
-                    time.sleep(1)
-                    sendCommand("SERVO PICK1 0")
-                    time.sleep(1)
-                    sendCommand("SERVO PICK2 180")
-                    time.sleep(1)
+                    # sendCommand("SERVO PAN 45")
+                    # time.sleep(1)
+                    # sendCommand("SERVO TILT 90")
+                    # time.sleep(1)
+                    # sendCommand("SERVO PICK1 0")
+                    # time.sleep(1)
+                    # sendCommand("SERVO PICK2 180")
+                    # time.sleep(1)
 
                     swivelCount = 0
                     turnCount = 0
@@ -554,13 +581,12 @@ def main():
                     printCurrentState(currentState)
 
                     sendCommand("PICKUP")
-                    time.sleep(15)
+                    time.sleep(30)
 
-                    while (1):
-                        print("End of test run")
-                        time.sleep(3)
+                    sendCommand("TURN_AROUND")
+                    time.sleep(5)
+
                     currentState = state.FIND_USER
-
 
                 case _:
                     print("Current State: UNKNOWN STATE")
@@ -569,6 +595,17 @@ def main():
         print("Running interuppted by User")
     finally:
         sendCommand("STOP")
+
+        # Reset Servo Camera Pan and Tilt positions 
+        sendCommand("SERVO PAN 0")
+        time.sleep(3)
+        sendCommand("SERVO TILT 90")
+        time.sleep(3)
+        sendCommand("SERVO PICK1 0")
+        time.sleep(3)
+        sendCommand("SERVO PICK2 180")
+        time.sleep(3)
+
         print("ENDING...")
 
 
