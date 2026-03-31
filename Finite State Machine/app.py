@@ -4,7 +4,7 @@ import math
 import time
 import json
 
-runtime = 1.5
+runtime = 2
 
 
 def look_around(find_object):
@@ -41,38 +41,42 @@ def look_around(find_object):
             for r in results:
                 boxes = r.boxes
                 for box in boxes:
-                    # bounding box
-                    x1, y1, x2, y2 = box.xyxy[0]
-                    x1, y1, x2, y2 = int(x1), int(y1), int(
-                        x2), int(y2)  # convert to int values
                     cls = int(box.cls[0])
 
-                    # class name
-                    print("Class name -->", class_names[cls])
-                    # if (class_names[cls] != find_object):
-                    #     continue
+                    if (class_names[cls] != find_object):
+                        continue
+                    else:
+                        # bounding box
+                        x1, y1, x2, y2 = box.xyxy[0]
+                        x1, y1, x2, y2 = int(x1), int(y1), int(
+                            x2), int(y2)  # convert to int values
 
-                    # put box in cam
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
+                        # class name
+                        print("Class name -->", class_names[cls])
+                        # if (class_names[cls] != find_object):
+                        #     continue
 
-                    # confidence
-                    confidence = math.ceil((box.conf[0]*100))/100
-                    print("Confidence --->", confidence)
+                        # put box in cam
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
 
-                    # Dimensions
-                    found_object, foundBool, bx, by, offset = dimensions(
-                        find_object, class_names[cls], x1, y1, x2, y2)
+                        # confidence
+                        confidence = math.ceil((box.conf[0]*100))/100
+                        print("Confidence --->", confidence)
 
-                    # object details
-                    org = [x1, y1]
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    fontScale = 1
-                    color = (96, 86, 20)
-                    thickness = 2
+                        # Dimensions
+                        found_object, foundBool, bx, by, offset = dimensions(
+                            find_object, class_names[cls], x1, y1, x2, y2)
 
-                    label = f"class: {class_names[cls]} conf:{confidence}"
-                    cv2.putText(img, label, org, font,
-                                fontScale, color, thickness)
+                        # object details
+                        org = [x1, y1]
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        fontScale = 1
+                        color = (96, 86, 20)
+                        thickness = 2
+
+                        label = f"class: {class_names[cls]} conf:{confidence}"
+                        cv2.putText(img, label, org, font,
+                                    fontScale, color, thickness)
 
             cv2.imshow('Webcam', img)
             if cv2.waitKey(1) == ord('q'):
@@ -102,11 +106,11 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
         print("You are in front of apple")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "medicine" and find_object == class_names and 310 < offset_x and offset_x < 340):
+    elif (find_object == "medicine" and find_object == class_names and 300 < offset_x and offset_x < 340):
         print("You are in front of medicine")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "user" and find_object == class_names and 265 < bounding_x and 455 < bounding_y):
+    elif (find_object == "user" and find_object == class_names and 320 < offset_x and offset_x < 360):
         print("You are in front of user")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
