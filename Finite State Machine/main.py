@@ -88,7 +88,7 @@ def main():
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
-                    
+
                     currentState = state.TRAVEL_TO_OBJ
                     # currentState = state.TAKE_INSTRUCTION
                 case state.TAKE_INSTRUCTION:
@@ -131,7 +131,7 @@ def main():
                         query = json.load(input)
                     findObject = query.get("object")
 
-                    # Reset Servo Camera Pan and Tilt positions 
+                    # Reset Servo Camera Pan and Tilt positions
                     sendCommand("SERVO PAN 45")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
@@ -146,8 +146,9 @@ def main():
                     swivelRight = False
 
                     while (1):
-                        print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
-                            
+                        print("Swivel Count: " + str(swivelCount) +
+                              " Turn Count: " + str(turnCount) + "\n")
+
                         if (swivelCount < 60 and swivelRight == True):
                             servoPosition = sendCommand("SWIVEL_R")
                             time.sleep(0.5)
@@ -164,7 +165,7 @@ def main():
                             # swivelCount must be above 20 so move forward
                             sendCommand("FORWARD")
                             time.sleep(1)
-                            swivelRight = not(swivelRight)
+                            swivelRight = not (swivelRight)
                             swivelCount = 0
                             turnCount += 1
                             print("Servo is at " + servoPosition)
@@ -176,7 +177,8 @@ def main():
                             swivelCount = 0
                             turnCount = 0
 
-                        [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
+                        [foundObject, foundBool, bounding_x, bounding_y,
+                            offset] = vision.look_around(findObject)
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
@@ -186,11 +188,13 @@ def main():
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
                                 sendCommand("RIGHT")
-                                time.sleep((45 - float(servoPosition))*turnWeight)
+                                time.sleep(
+                                    (45 - float(servoPosition))*turnWeight)
                                 sendCommand("STOP")
                             else:
                                 sendCommand("LEFT")
-                                time.sleep((float(servoPosition) - 40)*turnWeight)
+                                time.sleep(
+                                    (float(servoPosition) - 40)*turnWeight)
                                 sendCommand("STOP")
 
                             currentState = state.TRAVEL_TO_OBJ
@@ -201,7 +205,7 @@ def main():
                     # Bools for tilt servo adjustments when approaching the object
                     firstBool = False
                     secondBool = False
-                    
+
                     # load target object
                     with open('object.JSON', 'r') as f:
                         query = json.load(f)
@@ -212,27 +216,26 @@ def main():
                     if (target == "medicine"):
                         desiredBx = 65
                         desiredBy = 105
-                        desiredOffsetMax = 327 # 322 is generally centred for medicine
+                        desiredOffsetMax = 327  # 322 is generally centred for medicine
                         desiredOffsetMin = 317
 
-                    
                     if (target == "mug"):
                         desiredBx = 133
                         desiredBy = 122
-                        desiredOffsetMax = 350 # 347 is generally centred for mug
+                        desiredOffsetMax = 350  # 347 is generally centred for mug
                         desiredOffsetMin = 325
-                        #angled
+                        # angled
                         desiredBx_ang = 94
                         desiredBy_ang = 119
-                        desiredOffsetMax_ang = 335 # 332 is generally centred for angled mug
+                        desiredOffsetMax_ang = 335  # 332 is generally centred for angled mug
                         desiredOffsetMin_ang = 322
 
                     if (target == "remote"):
                         desiredBx = 155
                         desiredBy = 35
-                        desiredOffsetMax = 333 # 330 is generally centred for remote
+                        desiredOffsetMax = 333  # 330 is generally centred for remote
                         desiredOffsetMin = 320
-                        #angled
+                        # angled
                         # desiredBx_ang = 94
                         # desiredBy_ang = 119
                         # desiredOffsetMax_ang = 335 # 330 is generally centred for angled remote
@@ -241,25 +244,24 @@ def main():
                     if (target == "shoe"):
                         desiredBx = 132
                         desiredBy = 118
-                        desiredOffsetMax = 341 # 338 is generally centred for shoe
+                        desiredOffsetMax = 341  # 338 is generally centred for shoe
                         desiredOffsetMin = 328
-                        #angled
+                        # angled
                         desiredBx_ang = 138
                         desiredBy_ang = 102
-                        desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
+                        desiredOffsetMax_ang = 336  # 333 is generally centred for angled shoe
                         desiredOffsetMin_ang = 323
 
                     if (target == "user"):
                         desiredBx = 114
                         desiredBy = 198
-                        desiredOffsetMax = 333 # 330 is generally centred for user
+                        desiredOffsetMax = 333  # 330 is generally centred for user
                         desiredOffsetMin = 320
-                        #angled
+                        # angled
                         # desiredBx_ang = 138
                         # desiredBy_ang = 102
                         # desiredOffsetMax_ang = 336 # 333 is generally centred for angled shoe
                         # desiredOffsetMin_ang = 323
-
 
                     sendCommand("SERVO TILT 90")
                     time.sleep(2)
@@ -268,14 +270,14 @@ def main():
 
                     # Look at bounding box to see how far/off target the robot is pointings
                     result = vision.look_around(target)
-                    obj, found, bx, by , offset_x= result
+                    obj, found, bx, by, offset_x = result
                     print(f"before while bounding box x: {bx}")
                     print(f"before while bounding box y: {by}")
                     print(f"before while offset: {offset_x}")
 
                     while (bx < desiredBx and by < desiredBy):
                         r = vision.look_around(target)
-                        obj, found, bx, by , offset_x = r
+                        obj, found, bx, by, offset_x = r
                         print(f"bounding box x: {bx}")
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
@@ -294,7 +296,7 @@ def main():
                             time.sleep(1)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 30 < offset_x ):
+                        elif (desiredOffsetMax + 30 < offset_x):
                             sendCommand("M_RIGHT")
                             time.sleep(1)
                             print("Moving Right")
@@ -331,7 +333,7 @@ def main():
 
                     findObject = "user"
 
-                    # Reset Servo Camera Pan and Tilt positions 
+                    # Reset Servo Camera Pan and Tilt positions
                     sendCommand("SERVO PAN 0")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
@@ -346,8 +348,9 @@ def main():
                     swivelRight = False
 
                     while (1):
-                        print("Swivel Count: " + str(swivelCount) + " Turn Count: " + str(turnCount) + "\n")
-                            
+                        print("Swivel Count: " + str(swivelCount) +
+                              " Turn Count: " + str(turnCount) + "\n")
+
                         if (swivelCount < 60 and swivelRight == True):
                             servoPosition = sendCommand("SWIVEL_R")
                             time.sleep(0.5)
@@ -364,7 +367,7 @@ def main():
                             # swivelCount must be above 20 so move forward
                             sendCommand("FORWARD")
                             time.sleep(1)
-                            swivelRight = not(swivelRight)
+                            swivelRight = not (swivelRight)
                             swivelCount = 0
                             turnCount += 1
                             print("Servo is at " + servoPosition)
@@ -376,7 +379,8 @@ def main():
                             swivelCount = 0
                             turnCount = 0
 
-                        [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
+                        [foundObject, foundBool, bounding_x, bounding_y,
+                            offset] = vision.look_around(findObject)
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
@@ -386,11 +390,13 @@ def main():
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
                                 sendCommand("RIGHT")
-                                time.sleep((45 - float(servoPosition))*turnWeight)
+                                time.sleep(
+                                    (45 - float(servoPosition))*turnWeight)
                                 sendCommand("STOP")
                             else:
                                 sendCommand("LEFT")
-                                time.sleep((float(servoPosition) - 45)*turnWeight)
+                                time.sleep(
+                                    (float(servoPosition) - 45)*turnWeight)
                                 sendCommand("STOP")
 
                     time.sleep(5)
@@ -400,7 +406,7 @@ def main():
 
                     firstBool = False
                     secondBool = False
-                    
+
                     target = "user"
                     print(f"Looking for: {target}")
 
@@ -411,14 +417,14 @@ def main():
 
                     # Look at bounding box to see how far/off target the robot is pointings
                     result = vision.look_around(target)
-                    obj, found, bx, by , offset_x= result
+                    obj, found, bx, by, offset_x = result
                     print(f"before while bounding box x: {bx}")
                     print(f"before while bounding box y: {by}")
                     print(f"before while offset: {offset_x}")
 
                     while (bx < 105 and by < 105):
                         r = vision.look_around(target)
-                        obj, found, bx, by , offset_x = r
+                        obj, found, bx, by, offset_x = r
                         print(f"bounding box x: {bx}")
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
@@ -433,7 +439,7 @@ def main():
                             time.sleep(5)
                             secondBool = True
 
-                        if (offset_x < 300): # 322 is generally completely centred for medicine bottle
+                        if (offset_x < 300):  # 322 is generally completely centred for medicine bottle
                             sendCommand("S_LEFT")
                             time.sleep(0.1)
                             print("Moving left")
@@ -459,7 +465,6 @@ def main():
                     time.sleep(10)
 
                     currentState = state.FIND_USER
-
 
                 case _:
                     print("Current State: UNKNOWN STATE")
