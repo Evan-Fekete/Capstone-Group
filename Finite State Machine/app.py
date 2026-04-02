@@ -22,7 +22,7 @@ def look_around(find_object):
         cap.set(3, 640)
         cap.set(4, 480)
         # model
-        model = YOLO("yolo-Weights/NK01_model_v2.pt")
+        model = YOLO("yolo-Weights/NK01_model_v3.pt")
 
         current = time.time()
         found_object, foundBool, bx, by, offset = [
@@ -57,7 +57,8 @@ def look_around(find_object):
                         #     continue
 
                         # put box in cam
-                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
+                        cv2.rectangle(img, (x1, y1), (x2, y2),
+                                      (255, 0, 255), 3)
 
                         # confidence
                         confidence = math.ceil((box.conf[0]*100))/100
