@@ -210,14 +210,14 @@ def main():
                     print("Looking for " + findObject)
 
                     # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 0")
-                    time.sleep(1)
+                    sendCommand("SERVO PAN 45")
+                    time.sleep(2)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
                     sendCommand("SERVO PICK1 0")
-                    time.sleep(1)
+                    time.sleep(3)
                     sendCommand("SERVO PICK2 180")
-                    time.sleep(1)
+                    time.sleep(3)
 
                     swivelCount = 0
                     turnCount = 0
@@ -253,8 +253,9 @@ def main():
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
+                            time.sleep(1)
 
-                            turnWeight = 0.015
+                            turnWeight = 0.012
 
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
@@ -267,7 +268,7 @@ def main():
                                 time.sleep((float(servoPosition) - 45)*turnWeight)
                                 sendCommand("STOP")
 
-                            time.sleep(2)
+                            time.sleep(3)
                             currentState = state.TRAVEL_TO_OBJ
                             break
 
@@ -285,15 +286,15 @@ def main():
                     print(f"Looking for: {target}")
 
                     if (target == "medicine"):
-                        desiredBx = 55
-                        desiredBy = 105
+                        desiredBx = 60
+                        desiredBy = 110
                         desiredOffsetMax = 320
-                        desiredOffsetMin = 300
+                        desiredOffsetMin = 290
 
                         firstTiltBx = 30
                         firstTiltBy = 70
-                        slowMoveBx = 45
-                        slowMoveBy = 75
+                        slowMoveBx = 60
+                        slowMoveBy = 90
                     
                     if (target == "mug"):
                         desiredBx = 105
@@ -329,17 +330,6 @@ def main():
                         firstTiltBy = 80
                         slowMoveBx = 143
                         slowMoveBy = 107
-
-                    if (target == "user"):
-                        desiredBx = 114
-                        desiredBy = 198
-                        desiredOffsetMax = 333  # 330 is generally centred for user
-                        desiredOffsetMin = 320
-
-                        firstTiltBx = 89
-                        firstTiltBy = 160
-                        slowMoveBx = 114
-                        slowMoveBy = 198
 
                     leftView = False
 
@@ -381,41 +371,41 @@ def main():
                             time.sleep(5)
                             print("OBJECT HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
                             leftView = True
-                            continue
+                            break
 
-                        elif (offset_x < desiredOffsetMin - 100):
+                        elif (offset_x < desiredOffsetMin - 50):
                             sendCommand("L_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 100 < offset_x ):
+                        elif (desiredOffsetMax + 50 < offset_x ):
                             sendCommand("L_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
 
-                        elif (offset_x < desiredOffsetMin - 20):
+                        elif (offset_x < desiredOffsetMin - 10):
                             sendCommand("M_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 20 < offset_x):
+                        elif (desiredOffsetMax + 10 < offset_x):
                             sendCommand("M_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
 
                         elif (offset_x < desiredOffsetMin):
                             sendCommand("S_LEFT")
-                            time.sleep(1)
+                            time.sleep(0.5)
                             print("Moving left")
 
                         elif (desiredOffsetMax < offset_x):
                             sendCommand("S_RIGHT")
-                            time.sleep(1)
+                            time.sleep(0.5)
                             print("Moving Right")
 
                         elif (secondBool == True):
                             sendCommand("SLOW_FORWARD")
-                            time.sleep(2)
+                            time.sleep(1)
                             print("Moving forward slowly")
                         else:
                             sendCommand("FORWARD")
@@ -440,7 +430,7 @@ def main():
                     findObject = "user"
 
                     # Reset Servo Camera Pan and Tilt positions
-                    sendCommand("SERVO PAN 0")
+                    sendCommand("SERVO PAN 45")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
@@ -484,19 +474,21 @@ def main():
                         if (foundBool == True):
                             print(findObject + " has been found.")
 
-                            turnWeight = 0.015
+                            # turnWeight = 0.0143
 
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
-                                sendCommand("RIGHT")
-                                time.sleep(
-                                    (45 - float(servoPosition))*turnWeight)
-                                sendCommand("STOP")
+                                sendCommand("L_RIGHT")
+                                # sendCommand("RIGHT")
+                                # time.sleep(
+                                #     (45 - float(servoPosition))*turnWeight)
+                                # sendCommand("STOP")
                             else:
-                                sendCommand("LEFT")
-                                time.sleep(
-                                    (float(servoPosition) - 45)*turnWeight)
-                                sendCommand("STOP")
+                                sendCommand("L_LEFT")
+                                # sendCommand("LEFT")
+                                # time.sleep(
+                                #     (float(servoPosition) - 45)*turnWeight)
+                                # sendCommand("STOP")
 
                             time.sleep(2)
                             currentState = state.RETURN_OBJ
