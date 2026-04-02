@@ -98,8 +98,12 @@ def main():
                     printCurrentState(currentState)
 
                     while(1):
+                        # ========================================
+                        # Password Check Section
+                        # ========================================
+
                         print("="*50)
-                        print("Passphrase LLM Check:")
+                        print("Passphrase Check:")
                         print("="*50)
 
                         # audio = speech.record_audio()
@@ -133,44 +137,58 @@ def main():
 
                         if "True" in reply: 
                             print("Passphrase Check Confirmed Moving On...\n")
-                            break
                         else: 
                             print("Passphrase Check Failed Looping...\n")
                             continue
 
-                    print("="*50)
-                    print("User Instruction Check:")
-                    print("="*50)
+                        # ========================================
+                        # User Instruction Check
+                        # ========================================
 
-                    # LED signifies Pi is recording user instructions
-                    instructionLED.on()
+                        print("="*50)
+                        print("User Instruction Check:")
+                        print("="*50)
 
-                    # Uncomment to activate recording and transcription
-                    # audio = speech.record_audio()
-                    # user_input = speech.transcribe_audio(audio)
-                    # Uncomment to define user input
-                    user_input = "Bring me the medicine"
-                    time.sleep(1)
-                    
-                    # Turn off LED to show PI is done recording instructions
-                    instructionLED.off()
+                        time.sleep(1)
 
-                    # JSON Schema prompt used to return JSON schema for vision system
-                    prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
-                        Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
-                        Example:
-                        User: bring me the apple
-                        JSON: {{"action":"fetch","object":"apple"}}
-                        Real User Input:
-                        User: {text}
-                        JSON:"""
-                    formatted = prompt.format(text=user_input)
-                    reply = speech.TextToJSON(formatted)
-                    print("\nLLM Response:\n", reply)
+                        # LED signifies Pi is recording user instructions
+                        instructionLED.on()
 
-                    # Save the JSON response to file
-                    json_data = save_json_response(reply)
-                    print("JSON Data: " + str(json_data))
+                        # Uncomment to activate recording and transcription
+                        # audio = speech.record_audio()
+                        # user_input = speech.transcribe_audio(audio)
+                        # Uncomment to define user input
+                        user_input = "Bring me the medicine"
+                        time.sleep(1)
+                        
+                        # Turn off LED to show PI is done recording instructions
+                        instructionLED.off()
+
+                        # JSON Schema prompt used to return JSON schema for vision system
+                        prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
+                            Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
+                            Example 1:
+                            User: bring me the apple
+                            JSON: {{"action":"fetch","object":"apple"}}
+                            Example 2:
+                            User: hello my name is 
+                            Real User Input:
+                            User: {text}
+                            JSON:"""
+                        formatted = prompt.format(text=user_input)
+                        reply = speech.TextToJSON(formatted)
+                        print("\nLLM Response:\n", reply)
+
+                        # Save the JSON response to file
+                        json_data = save_json_response(reply)
+                        print("JSON Data: " + str(json_data))
+
+                        with open('object.JSON', 'r') as input:
+                            query = json.load(input)
+                        findObject = query.get("object")
+
+                        if "unknown" in findObject:
+                            print("Instruction is valid continuing to find object...")
 
                     time.sleep(1)
                     currentState = state.FIND_OBJ
@@ -188,6 +206,8 @@ def main():
                     with open('object.JSON', 'r') as input:
                         query = json.load(input)
                     findObject = query.get("object")
+
+                    print("Looking for " + findObject)
 
                     # Reset Servo Camera Pan and Tilt positions 
                     sendCommand("SERVO PAN 0")
@@ -415,7 +435,7 @@ def main():
                     # After this the robot should ideally be facing the the user, now it will move forward
 
                     printCurrentState(currentState)
-                    foundObject = False
+                    foundBool = False
 
                     findObject = "user"
 

@@ -14,10 +14,10 @@ def look_around(find_object):
         # start webcam
 
         # Uncomment for Linux
-        # cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)
 
         # # Uncomment for Windows
-        cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+        # cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
         cap.set(3, 640)
         cap.set(4, 480)
