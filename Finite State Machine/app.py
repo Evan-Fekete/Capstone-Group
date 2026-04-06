@@ -22,7 +22,7 @@ def look_around(find_object):
         cap.set(3, 640)
         cap.set(4, 480)
         # model
-        model = YOLO("yolo-Weights/NK01_model_v3.pt")
+        model = YOLO("yolo-Weights/NK01_model_v3_fixed.pt")
 
         current = time.time()
         found_object, foundBool, bx, by, offset = [
@@ -103,7 +103,7 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
         print("You are in front of mug")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "apple" and find_object == class_names and 290 < offset_x and offset_x < 360):
+    elif (find_object == "apple" and find_object == class_names and 300 < offset_x and offset_x < 340):
         print("You are in front of apple")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 

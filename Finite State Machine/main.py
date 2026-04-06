@@ -20,7 +20,8 @@ from gpiozero import LED
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define interface for talking with ESP32
-ser = serial.Serial('/dev/serial0', 9600, timeout=1)
+# ser = serial.Serial('/dev/serial0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 
 # Define Constants for States for FSM
 
@@ -42,6 +43,8 @@ def sendCommand(cmd):
 
     ser.write(f'{cmd}\n'.encode())
     # read back a confirmation
+    time.sleep(1)
+
     if ser.in_waiting:
         returnValue = ser.readline().decode().strip()
         print("RECEIVED DATA: " + returnValue)
@@ -81,9 +84,11 @@ def main():
                     printCurrentState(currentState)
 
                     # Used to quickly test communication between Pi and ESP32
-                    sendCommand("SWIVEL_L")
-                    time.sleep(1)
-                    sendCommand("STOP")
+                    # sendCommand("PICKUP")
+                    # time.sleep(2)
+                    # sendCommand("SWIVEL_R")
+                    # time.sleep(2)
+                    # sendCommand("STOP")
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
@@ -106,14 +111,14 @@ def main():
                         print("Passphrase Check:")
                         print("="*50)
 
-                        # audio = speech.record_audio()
-                        # user_input = speech.transcribe_audio(audio)
+                        audio = speech.record_audio()
+                        user_input = speech.transcribe_audio(audio)
                         # Uncomment to define user input
-                        time.sleep(1)
-                        user_input = "My name is Bob, Hey Siri, Lorell Ipsum"
+                        # time.sleep(1)
+                        # user_input = "My name is Bob, Password, Lorell Ipsum"
 
                         # Non LLM version of passphrase check code
-                        if "hey siri" in user_input.lower():
+                        if "password" in user_input.lower():
                             reply = "True"
                         else:
                             reply = "False"
@@ -155,11 +160,11 @@ def main():
                         instructionLED.on()
 
                         # Uncomment to activate recording and transcription
-                        # audio = speech.record_audio()
-                        # user_input = speech.transcribe_audio(audio)
+                        audio = speech.record_audio()
+                        user_input = speech.transcribe_audio(audio)
                         # Uncomment to define user input
-                        user_input = "Bring me the medicine"
-                        time.sleep(1)
+                        # user_input = "Bring me the medicine"
+                        # time.sleep(1)
                         
                         # Turn off LED to show PI is done recording instructions
                         instructionLED.off()
@@ -187,8 +192,11 @@ def main():
                             query = json.load(input)
                         findObject = query.get("object")
 
-                        if "unknown" in findObject:
+                        if "unknown" not in findObject:
                             print("Instruction is valid continuing to find object...")
+                            break
+                        else:
+                            print("Instruction is invalid returning to passphrase check...")
 
                     time.sleep(1)
                     currentState = state.FIND_OBJ
@@ -209,41 +217,32 @@ def main():
 
                     print("Looking for " + findObject)
 
-                    # Reset Servo Camera Pan and Tilt positions 
-                    sendCommand("SERVO PAN 45")
-                    time.sleep(2)
-                    sendCommand("SERVO TILT 90")
-                    time.sleep(1)
-                    sendCommand("SERVO PICK1 0")
-                    time.sleep(3)
-                    sendCommand("SERVO PICK2 180")
-                    time.sleep(3)
-
                     swivelCount = 0
-                    turnCount = 0
-                    swivelRight = False
 
                     while (1):
                         print("Swivel Count: " + str(swivelCount))
 
-                        if (swivelCount >= 30):
-                            # Move forward about a foot and then do a 90 degree turn
-                            sendCommand("FORWARD")
+                        if (swivelCount >= 0):
+                            sendCommand("LEFT")
+                            time.sleep(1)
+                            sendCommand("LEFT")
+                            time.sleep(1)
+                            sendCommand("STOP")
                             time.sleep(1)
 
-                            sendCommand("LEFT")
-                            time.sleep(0.5)
-                            sendCommand("STOP")
+                            # Reset Servo Camera Pan and Tilt positions 
+                            sendCommand("SERVO PAN 0")
+                            time.sleep(3)
+                            sendCommand("SERVO TILT 90")
+                            time.sleep(3)
+                            sendCommand("SERVO PICK1 0")
+                            time.sleep(3)
+                            sendCommand("SERVO PICK2 180")
+                            time.sleep(3)
+
                             swivelCount = 0
-                            swivelRight = not swivelRight
 
-                        if (swivelCount < 30 and swivelRight == True):
-                            servoPosition = sendCommand("SWIVEL_R")
-                            time.sleep(0.5)
-                            swivelCount += 1
-                            print("Servo is at " + str(servoPosition))
-
-                        elif (swivelCount < 30 and swivelRight == False):
+                        if (swivelCount < 30):
                             servoPosition = sendCommand("SWIVEL_L")
                             time.sleep(0.5)
                             swivelCount += 1
@@ -255,7 +254,7 @@ def main():
                             print(findObject + " has been found.")
                             time.sleep(1)
 
-                            turnWeight = 0.012
+                            turnWeight = 0.006
 
                             # Turn Object based on servo position and turn weight
                             if (int(servoPosition) < 45):
@@ -326,10 +325,19 @@ def main():
                         desiredOffsetMin = 328
 
                         firstTiltBx = 100
-                        
                         firstTiltBy = 80
                         slowMoveBx = 143
                         slowMoveBy = 107
+                    if (target == "apple"):
+                        desiredBx = 107
+                        desiredBy = 107
+                        desiredOffsetMax = 320
+                        desiredOffsetMin = 317
+
+                        firstTiltBx = 65
+                        firstTiltBy = 65
+                        slowMoveBx = 90
+                        slowMoveBy = 90
 
                     leftView = False
 
@@ -351,7 +359,7 @@ def main():
 
                     if (bx != 0 or by != 0): leftView = False
 
-                    while (bx < desiredBx and by < desiredBy):
+                    while ((bx < desiredBx and by < desiredBy) or (offset_x < desiredOffsetMin and offset_x > desiredOffsetMax)):
                         r = vision.look_around(target)
                         obj, found, bx, by, offset_x = r
                         print(f"bounding box x: {bx}")
@@ -373,22 +381,22 @@ def main():
                             leftView = True
                             break
 
-                        elif (offset_x < desiredOffsetMin - 50):
+                        elif (offset_x < desiredOffsetMin - 70):
                             sendCommand("L_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 50 < offset_x ):
+                        elif (desiredOffsetMax + 70 < offset_x ):
                             sendCommand("L_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
 
-                        elif (offset_x < desiredOffsetMin - 10):
+                        elif (offset_x < desiredOffsetMin - 20):
                             sendCommand("M_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 10 < offset_x):
+                        elif (desiredOffsetMax + 20 < offset_x):
                             sendCommand("M_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
@@ -411,6 +419,9 @@ def main():
                             sendCommand("FORWARD")
                             time.sleep(1)
                             print("Moving forward")
+                    print(f"bounding box x: {bx}")
+                    print(f"bounding box y: {by}")
+                    print(f"offset: {offset_x}")
                     sendCommand("STOP")
 
                     time.sleep(3)
@@ -430,7 +441,7 @@ def main():
                     findObject = "user"
 
                     # Reset Servo Camera Pan and Tilt positions
-                    sendCommand("SERVO PAN 45")
+                    sendCommand("SERVO PAN 0")
                     time.sleep(1)
                     sendCommand("SERVO TILT 90")
                     time.sleep(1)
@@ -504,7 +515,7 @@ def main():
                     print(f"Looking for: {target}")
 
                     if (target == "user"):
-                        desiredBx = 114
+                        desiredBx = 100
                         desiredBy = 198
                         desiredOffsetMax = 333 # 330 is generally centred for user
                         desiredOffsetMin = 320
