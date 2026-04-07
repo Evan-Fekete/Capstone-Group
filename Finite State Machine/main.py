@@ -43,12 +43,14 @@ def sendCommand(cmd):
 
     ser.write(f'{cmd}\n'.encode())
     # read back a confirmation
-    time.sleep(1)
+
+    # need time for swivel response to get back to pi
+    if (cmd == "SWIVEL_L" or cmd == "SWIVEL_R" or "SERVO " in cmd): 
+        time.sleep(1)
 
     if ser.in_waiting:
         returnValue = ser.readline().decode().strip()
         print("RECEIVED DATA: " + returnValue)
-        time.sleep(0.1)
         return returnValue
     else:
         return None
@@ -84,11 +86,12 @@ def main():
                     printCurrentState(currentState)
 
                     # Used to quickly test communication between Pi and ESP32
-                    # sendCommand("PICKUP")
-                    # time.sleep(2)
-                    # sendCommand("SWIVEL_R")
-                    # time.sleep(2)
-                    # sendCommand("STOP")
+                    # sendCommand("FORWARD")
+                    # time.sleep(5)
+                    # sendCommand("FORWARD")
+                    # time.sleep(5)
+                    # sendCommand("FORWARD")
+                    # time.sleep(5)
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
@@ -97,7 +100,7 @@ def main():
                     instructionLED = LED(17)
 
                     # currentState = state.TRAVEL_TO_OBJ
-                    currentState = state.FIND_OBJ
+                    currentState = state.TAKE_INSTRUCTION
 
                 case state.TAKE_INSTRUCTION:
                     printCurrentState(currentState)
@@ -222,29 +225,21 @@ def main():
                     while (1):
                         print("Swivel Count: " + str(swivelCount))
 
-                        if (swivelCount >= 0):
-                            sendCommand("LEFT")
-                            time.sleep(1)
-                            sendCommand("LEFT")
+                        if (swivelCount >= 30):
+                            sendCommand("FACE_LEFT")
                             time.sleep(1)
                             sendCommand("STOP")
                             time.sleep(1)
 
                             # Reset Servo Camera Pan and Tilt positions 
                             sendCommand("SERVO PAN 0")
-                            time.sleep(3)
-                            sendCommand("SERVO TILT 90")
-                            time.sleep(3)
-                            sendCommand("SERVO PICK1 0")
-                            time.sleep(3)
-                            sendCommand("SERVO PICK2 180")
-                            time.sleep(3)
+                            time.sleep(4)
 
                             swivelCount = 0
 
                         if (swivelCount < 30):
                             servoPosition = sendCommand("SWIVEL_L")
-                            time.sleep(0.5)
+                            time.sleep(1)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
@@ -254,18 +249,13 @@ def main():
                             print(findObject + " has been found.")
                             time.sleep(1)
 
-                            turnWeight = 0.006
-
                             # Turn Object based on servo position and turn weight
-                            if (int(servoPosition) < 45):
-                                sendCommand("RIGHT")
-                                time.sleep(
-                                    (45 - float(servoPosition))*turnWeight)
-                                sendCommand("STOP")
-                            else:
-                                sendCommand("LEFT")
-                                time.sleep((float(servoPosition) - 45)*turnWeight)
-                                sendCommand("STOP")
+                            if (int(servoPosition) < 24):
+                                sendCommand("45_RIGHT")
+                                time.sleep(2)
+                            elif (int(servoPosition) > 66):
+                                sendCommand("45_LEFT")
+                                time.sleep(2)
 
                             time.sleep(3)
                             currentState = state.TRAVEL_TO_OBJ
@@ -328,11 +318,12 @@ def main():
                         firstTiltBy = 80
                         slowMoveBx = 143
                         slowMoveBy = 107
+                        
                     if (target == "apple"):
                         desiredBx = 107
                         desiredBy = 107
-                        desiredOffsetMax = 320
-                        desiredOffsetMin = 317
+                        desiredOffsetMax = 323
+                        desiredOffsetMin = 320
 
                         firstTiltBx = 65
                         firstTiltBy = 65
@@ -442,41 +433,33 @@ def main():
 
                     # Reset Servo Camera Pan and Tilt positions
                     sendCommand("SERVO PAN 0")
-                    time.sleep(1)
+                    time.sleep(4)
                     sendCommand("SERVO TILT 90")
-                    time.sleep(1)
+                    time.sleep(4)
                     # sendCommand("SERVO PICK1 0")
                     # time.sleep(1)
-                    sendCommand("SERVO PICK2 180")
-                    time.sleep(1)
 
+                    
                     swivelCount = 0
-                    turnCount = 0
-                    swivelRight = False
 
                     while (1):
                         print("Swivel Count: " + str(swivelCount))
 
                         if (swivelCount >= 30):
-                            # Move forward about a foot and then do a 90 degree turn
-                            sendCommand("FORWARD")
+                            sendCommand("FACE_LEFT")
+                            time.sleep(1)
+                            sendCommand("STOP")
                             time.sleep(1)
 
-                            sendCommand("LEFT")
-                            time.sleep(0.5)
-                            sendCommand("STOP")
+                            # Reset Servo Camera Pan and Tilt positions 
+                            sendCommand("SERVO PAN 0")
+                            time.sleep(4)
+
                             swivelCount = 0
-                            swivelRight = not swivelRight
 
-                        if (swivelCount < 30 and swivelRight == True):
-                            servoPosition = sendCommand("SWIVEL_R")
-                            time.sleep(0.5)
-                            swivelCount += 1
-                            print("Servo is at " + str(servoPosition))
-
-                        elif (swivelCount < 30 and swivelRight == False):
+                        if (swivelCount < 30):
                             servoPosition = sendCommand("SWIVEL_L")
-                            time.sleep(0.5)
+                            time.sleep(1)
                             swivelCount += 1
                             print("Servo is at " + str(servoPosition))
 
@@ -484,25 +467,18 @@ def main():
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
-
-                            # turnWeight = 0.0143
+                            time.sleep(1)
 
                             # Turn Object based on servo position and turn weight
-                            if (int(servoPosition) < 45):
-                                sendCommand("L_RIGHT")
-                                # sendCommand("RIGHT")
-                                # time.sleep(
-                                #     (45 - float(servoPosition))*turnWeight)
-                                # sendCommand("STOP")
-                            else:
-                                sendCommand("L_LEFT")
-                                # sendCommand("LEFT")
-                                # time.sleep(
-                                #     (float(servoPosition) - 45)*turnWeight)
-                                # sendCommand("STOP")
+                            if (int(servoPosition) < 24):
+                                sendCommand("45_RIGHT")
+                                time.sleep(2)
+                            elif (int(servoPosition) > 66):
+                                sendCommand("45_LEFT")
+                                time.sleep(2)
 
-                            time.sleep(2)
-                            currentState = state.RETURN_OBJ
+                            time.sleep(3)
+                            currentState = state.TRAVEL_TO_OBJ
                             break
 
                 case state.RETURN_OBJ:
@@ -620,8 +596,8 @@ def main():
                     sendCommand("PICKUP")
                     time.sleep(30)
 
-                    sendCommand("TURN_AROUND")
-                    time.sleep(5)
+                    # sendCommand("TURN_AROUND")
+                    # time.sleep(5)
 
                     currentState = state.FIND_USER
 
