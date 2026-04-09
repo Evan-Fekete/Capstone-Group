@@ -21,10 +21,15 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define interface for talking with ESP32
 # ser = serial.Serial('/dev/serial0', 9600, timeout=1)
-ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyUSB1', 9600, timeout=1)
 
 # Define Constants for States for FSM
 
+class action(Enum):
+    FETCH = 1
+    LOOK = 2
+    UPDATE_PASSWORD = 3
+    UNKNOWN = 4
 
 class state(Enum):
     STARTUP = 1
@@ -79,6 +84,7 @@ def main():
 
     try:
         currentState = state.STARTUP
+        currentAction = action.FETCH
         # main match statement used for running code for current state
         while (1):
             match currentState:
@@ -86,8 +92,8 @@ def main():
                     printCurrentState(currentState)
 
                     # Used to quickly test communication between Pi and ESP32
-                    # sendCommand("FORWARD")
-                    # time.sleep(5)
+                    # sendCommand("PICKUP")
+                    # time.sleep(25)
                     # sendCommand("FORWARD")
                     # time.sleep(5)
                     # sendCommand("FORWARD")
@@ -95,9 +101,8 @@ def main():
 
                     # This vision is call is not used but it activates ultralytics library early on in the code
                     vision.look_around("apple")
-                    
-                    # Activate LEDs
-                    instructionLED = LED(17)
+
+                    password = "capstone"
 
                     # currentState = state.TRAVEL_TO_OBJ
                     currentState = state.TAKE_INSTRUCTION
@@ -121,7 +126,7 @@ def main():
                         # user_input = "My name is Bob, Password, Lorell Ipsum"
 
                         # Non LLM version of passphrase check code
-                        if "password" in user_input.lower():
+                        if password in user_input.lower():
                             reply = "True"
                         else:
                             reply = "False"
@@ -144,6 +149,8 @@ def main():
                         # print("\nLLM Response:\n", reply)
 
                         if "True" in reply: 
+                            sendCommand("LISTEN")
+                            time.sleep(3)
                             print("Passphrase Check Confirmed Moving On...\n")
                         else: 
                             print("Passphrase Check Failed Looping...\n")
@@ -159,9 +166,6 @@ def main():
 
                         time.sleep(1)
 
-                        # LED signifies Pi is recording user instructions
-                        instructionLED.on()
-
                         # Uncomment to activate recording and transcription
                         audio = speech.record_audio()
                         user_input = speech.transcribe_audio(audio)
@@ -169,22 +173,36 @@ def main():
                         # user_input = "Bring me the medicine"
                         # time.sleep(1)
                         
-                        # Turn off LED to show PI is done recording instructions
-                        instructionLED.off()
+                        sendCommand("SERVO TILT 90")
+                        time.sleep(3)
 
                         # JSON Schema prompt used to return JSON schema for vision system
-                        prompt = """You are a robot control agent. Convert user instructions found Real User Input. If parameter is not known then output unknown always display action, object, and color.
-                            Schema: action (fetch/place/deliver/stop), object (apple/mug/bottle/shoe)
+                        prompt = """You are a robot control agent. Convert user instructions found Real User Input. 
+                        The robot should be able to fetch an object, look at an object, or update its passphrase.
+                        If for fetch and look a parameter is not known then output unknown, always display action.
+                        Follow the schema at all times, never use an action or object that does not appear in the schema.
+                        If the object is not obvious try and pick the closest option possible from the schema.
+                            Schema: action (fetch/look/passphrase_update/unknown), object (apple/mug/medicine/shoes/remote/unknown)
                             Example 1:
                             User: bring me the apple
                             JSON: {{"action":"fetch","object":"apple"}}
                             Example 2:
-                            User: hello my name is 
+                            User: hello my name is evan
+                            JSON: {{"action":"unknown","object":"unknown"}}
+                            Example 3:
+                            User: update passphrase
+                            JSON: {{"action":"passphrase_update","object":"unknown"}}
+                            Example 4:
+                            User: look at the medicine bottle
+                            JSON: {{"action":"look","object":"medicine"}}
+                            Example 5:
+                            User: I am hungry
+                            JSON: {{"action":"fetch","object":"apple"}}
                             Real User Input:
                             User: {text}
                             JSON:"""
                         formatted = prompt.format(text=user_input)
-                        reply = speech.TextToJSON(formatted)
+                        reply = speech.promptLLM(formatted)
                         print("\nLLM Response:\n", reply)
 
                         # Save the JSON response to file
@@ -195,15 +213,66 @@ def main():
                             query = json.load(input)
                         findObject = query.get("object")
 
-                        if "unknown" not in findObject:
-                            print("Instruction is valid continuing to find object...")
-                            break
-                        else:
-                            print("Instruction is invalid returning to passphrase check...")
+                        match(query.get("action")):
+                            case "fetch":
+                                currentAction = action.FETCH
+                            case "look":
+                                currentAction = action.LOOK
+                            case "update_password":
+                                currentAction = action.UPDATE_PASSWORD
+                            case "unknown":
+                                currentAction = action.UNKNOWN
 
-                    time.sleep(1)
-                    currentState = state.FIND_OBJ
-                    time.sleep(2)
+                        if (currentAction == action.FETCH or currentAction == action.LOOK):
+                            if "unknown" not in findObject:
+                                print("Instruction is valid continuing to find object...")
+                                sendCommand("NOD")
+                                time.sleep(5)
+                                currentState = state.FIND_OBJ
+                                break
+                            else:
+                                print("Instruction is invalid returning to passphrase check...")
+                                sendCommand("SHAKE")
+                                time.sleep(5)
+                        elif (currentAction == action.UPDATE_PASSWORD):
+                            print("="*50)
+                            print("Passphrase Update Check:")
+                            print("="*50)
+
+                            sendCommand("LISTEN")
+                            time.sleep(3)
+
+                            audio = speech.record_audio()
+                            user_input = speech.transcribe_audio(audio)
+
+                            prompt = f"""User wants a new passphrase from the user input reason what they want the new password to be and return it as the output. 
+                            The passphrase should be one word. If you do not know what to make the password simply return 0.
+                            Example 1:
+                            User: make the new passphrase cat
+                            Output: cat
+                            Example 2:
+                            User: i like asparagus
+                            Output: 0
+                            Real User Input:
+                            User: {input}
+                            Output: 
+                            """
+
+                            formatted = prompt.format(text=user_input)
+                            reply = speech.promptLLM(formatted)
+                            print("\nLLM Response:\n", reply)
+
+                            if (reply == "0"):
+                                print("Password update failed returning to passphrase check...")
+
+                            print("Password updated to: " + reply)
+                            password = reply
+
+                        else:
+                            print("Action is unknown returning to passphrase check...")
+                            sendCommand("SHAKE")
+                            time.sleep(5)
+
 
                 case state.FIND_OBJ:
                     # This state will look around, move forward and then turn 90 degrees, and then repeat
@@ -214,6 +283,11 @@ def main():
                     printCurrentState(currentState)
                     foundObject = False
 
+                    sendCommand("SERVO TILT 90")
+                    time.sleep(3)
+                    sendCommand("SERVO PICK1 0")
+                    time.sleep(5)
+
                     with open('object.JSON', 'r') as input:
                         query = json.load(input)
                     findObject = query.get("object")
@@ -221,26 +295,25 @@ def main():
                     print("Looking for " + findObject)
 
                     swivelCount = 0
+                    cameraPos = [0, 45, 90]
 
                     while (1):
                         print("Swivel Count: " + str(swivelCount))
 
-                        if (swivelCount >= 30):
+                        if (swivelCount >= 3):
                             sendCommand("FACE_LEFT")
-                            time.sleep(1)
-                            sendCommand("STOP")
-                            time.sleep(1)
+                            time.sleep(2)
 
                             # Reset Servo Camera Pan and Tilt positions 
                             sendCommand("SERVO PAN 0")
-                            time.sleep(4)
+                            time.sleep(3)
 
                             swivelCount = 0
 
-                        if (swivelCount < 30):
-                            servoPosition = sendCommand("SWIVEL_L")
-                            time.sleep(1)
-                            swivelCount += 1
+                        elif (swivelCount < 3):
+
+                            servoPosition = sendCommand(f"SERVO PAN {cameraPos[swivelCount]}")
+                            time.sleep(3)
                             print("Servo is at " + str(servoPosition))
 
                         [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
@@ -250,16 +323,28 @@ def main():
                             time.sleep(1)
 
                             # Turn Object based on servo position and turn weight
-                            if (int(servoPosition) < 24):
-                                sendCommand("45_RIGHT")
-                                time.sleep(2)
-                            elif (int(servoPosition) > 66):
-                                sendCommand("45_LEFT")
-                                time.sleep(2)
+                            match(swivelCount):
+                                case 0:
+                                    print("Turning Right")
+                                    sendCommand("45_RIGHT")
+                                    time.sleep(2)
+                                    sendCommand("SERVO PAN 45")
+                                case 1:
+                                    print("Facing Object")
+                                case 2:
+                                    print("Turning Left")
+                                    sendCommand("45_LEFT")
+                                    time.sleep(2)
+                                    sendCommand("SERVO PAN 45")
 
-                            time.sleep(3)
-                            currentState = state.TRAVEL_TO_OBJ
+                            time.sleep(2)
+
+                            if (currentAction == action.LOOK):
+                                currentState = state.TAKE_INSTRUCTION
+                            elif (currentAction == action.FETCH):
+                                currentState = state.TRAVEL_TO_OBJ
                             break
+                        swivelCount += 1
 
                 case state.TRAVEL_TO_OBJ:
                     printCurrentState(currentState)
@@ -286,10 +371,10 @@ def main():
                         slowMoveBy = 90
                     
                     if (target == "mug"):
-                        desiredBx = 105
-                        desiredBy = 110
-                        desiredOffsetMax = 307
-                        desiredOffsetMin = 301
+                        desiredBx = 110
+                        desiredBy = 112
+                        desiredOffsetMax = 305
+                        desiredOffsetMin = 295
 
                         firstTiltBx = 60
                         firstTiltBy = 90
@@ -297,38 +382,37 @@ def main():
                         slowMoveBy = 80
 
                     if (target == "remote"):
-                        # TODO: Test pick up with remote a lot to get good thresholds
                         desiredBx = 155
-                        desiredBy = 35
+                        desiredBy = 90
                         desiredOffsetMax = 333  # 330 is generally centred for remote
                         desiredOffsetMin = 320
 
-                        firstTiltBx = 75
+                        firstTiltBx = 50
                         firstTiltBy = 40
                         slowMoveBx = 50
                         slowMoveBy = 50
 
                     if (target == "shoe"):
-                        desiredBx = 132
-                        desiredBy = 118
-                        desiredOffsetMax = 341  # 338 is generally centred for shoe
-                        desiredOffsetMin = 328
+                        desiredBx = 105
+                        desiredBy = 110
+                        desiredOffsetMax = 325
+                        desiredOffsetMin = 316
 
-                        firstTiltBx = 100
-                        firstTiltBy = 80
+                        firstTiltBx = 75
+                        firstTiltBy = 55
                         slowMoveBx = 143
                         slowMoveBy = 107
                         
                     if (target == "apple"):
-                        desiredBx = 107
-                        desiredBy = 107
-                        desiredOffsetMax = 323
-                        desiredOffsetMin = 320
+                        desiredBx = 103
+                        desiredBy = 103
+                        desiredOffsetMax = 326
+                        desiredOffsetMin = 317
 
                         firstTiltBx = 65
                         firstTiltBy = 65
-                        slowMoveBx = 90
-                        slowMoveBy = 90
+                        slowMoveBx = 80
+                        slowMoveBy = 80
 
                     leftView = False
 
@@ -350,21 +434,28 @@ def main():
 
                     if (bx != 0 or by != 0): leftView = False
 
+
+                    time.sleep(1)
                     while ((bx < desiredBx and by < desiredBy) or (offset_x < desiredOffsetMin and offset_x > desiredOffsetMax)):
                         r = vision.look_around(target)
                         obj, found, bx, by, offset_x = r
                         print(f"bounding box x: {bx}")
                         print(f"bounding box y: {by}")
                         print(f"offset: {offset_x}")
+                        time.sleep(1)
 
                         if ((bx > firstTiltBx or by > firstTiltBy) and firstBool == False):
                             sendCommand("SERVO TILT 100")
                             time.sleep(5)
+                            sendCommand("FORWARD")
+                            time.sleep(2)
+                            print("Moving forward")
+                            time.sleep(1)
                             firstBool = True
-
+                            secondBool = True
                         elif ((bx > slowMoveBx or by > slowMoveBy) and secondBool == False and firstBool == True):
                             time.sleep(1)
-                            secondBool = True
+                            # secondBool = True
                         elif (bx == 0 and by == 0):
                             # Has object left the view, if so return to find object state
                             time.sleep(5)
@@ -372,22 +463,22 @@ def main():
                             leftView = True
                             break
 
-                        elif (offset_x < desiredOffsetMin - 70):
+                        elif (offset_x < desiredOffsetMin - 100):
                             sendCommand("L_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 70 < offset_x ):
+                        elif (desiredOffsetMax + 100 < offset_x ):
                             sendCommand("L_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
 
-                        elif (offset_x < desiredOffsetMin - 20):
+                        elif (offset_x < desiredOffsetMin - 40):
                             sendCommand("M_LEFT")
                             time.sleep(2)
                             print("Moving Left")
 
-                        elif (desiredOffsetMax + 20 < offset_x):
+                        elif (desiredOffsetMax + 40 < offset_x):
                             sendCommand("M_RIGHT")
                             time.sleep(2)
                             print("Moving Right")
@@ -408,7 +499,7 @@ def main():
                             print("Moving forward slowly")
                         else:
                             sendCommand("FORWARD")
-                            time.sleep(1)
+                            time.sleep(3)
                             print("Moving forward")
                     print(f"bounding box x: {bx}")
                     print(f"bounding box y: {by}")
@@ -433,23 +524,26 @@ def main():
 
                     # Reset Servo Camera Pan and Tilt positions
                     sendCommand("SERVO PAN 0")
-                    time.sleep(4)
+                    time.sleep(2)
                     sendCommand("SERVO TILT 90")
-                    time.sleep(4)
+                    time.sleep(2)
                     # sendCommand("SERVO PICK1 0")
                     # time.sleep(1)
 
                     
                     swivelCount = 0
 
+                    print("Looking for " + findObject)
+
+                    swivelCount = 0
+                    cameraPos = [0, 45, 90]
+
                     while (1):
                         print("Swivel Count: " + str(swivelCount))
 
-                        if (swivelCount >= 30):
+                        if (swivelCount >= 3):
                             sendCommand("FACE_LEFT")
-                            time.sleep(1)
-                            sendCommand("STOP")
-                            time.sleep(1)
+                            time.sleep(2)
 
                             # Reset Servo Camera Pan and Tilt positions 
                             sendCommand("SERVO PAN 0")
@@ -457,29 +551,41 @@ def main():
 
                             swivelCount = 0
 
-                        if (swivelCount < 30):
-                            servoPosition = sendCommand("SWIVEL_L")
-                            time.sleep(1)
-                            swivelCount += 1
+                        elif (swivelCount < 3):
+
+                            servoPosition = sendCommand(f"SERVO PAN {cameraPos[swivelCount]}")
+                            time.sleep(5)
                             print("Servo is at " + str(servoPosition))
 
                         [foundObject, foundBool, bounding_x, bounding_y, offset] = vision.look_around(findObject)
+                        time.sleep(1)
 
                         if (foundBool == True):
                             print(findObject + " has been found.")
                             time.sleep(1)
 
                             # Turn Object based on servo position and turn weight
-                            if (int(servoPosition) < 24):
-                                sendCommand("45_RIGHT")
-                                time.sleep(2)
-                            elif (int(servoPosition) > 66):
-                                sendCommand("45_LEFT")
-                                time.sleep(2)
+                            match(swivelCount):
+                                case 0:
+                                    print("Turning Right")
+                                    sendCommand("45_RIGHT")
+                                    time.sleep(2)
+                                    sendCommand("SERVO PAN 45")
+                                case 1:
+                                    print("Facing Object")
+                                    time.sleep(2)
+                                    sendCommand("SERVO PAN 45")
+                                case 2:
+                                    print("Turning Left")
+                                    sendCommand("45_LEFT")
+                                    time.sleep(2)
+                                    sendCommand("SERVO PAN 45")
 
                             time.sleep(3)
-                            currentState = state.TRAVEL_TO_OBJ
+
+                            currentState = state.RETURN_OBJ
                             break
+                        swivelCount += 1
 
                 case state.RETURN_OBJ:
                     printCurrentState(currentState)
@@ -493,13 +599,11 @@ def main():
                     if (target == "user"):
                         desiredBx = 100
                         desiredBy = 198
-                        desiredOffsetMax = 333 # 330 is generally centred for user
-                        desiredOffsetMin = 320
+                        desiredOffsetMax = 336 # 330 is generally centred for user
+                        desiredOffsetMin = 324
 
                         firstTiltBx = 89
                         firstTiltBy = 160
-                        slowMoveBx = 114
-                        slowMoveBy = 198
 
                     leftView = False
 
@@ -530,12 +634,9 @@ def main():
 
                         if ((bx > firstTiltBx or by > firstTiltBy) and firstBool == False):
                             sendCommand("SERVO TILT 100")
-                            time.sleep(5)
+                            time.sleep(3)
                             firstBool = True
 
-                        elif ((bx > slowMoveBx or by > slowMoveBy) and secondBool == False and firstBool == True):
-                            time.sleep(1)
-                            secondBool = True
                         elif (bx == 0 and by == 0):
                             # Has object left the view, if so return to find object state
                             time.sleep(5)
@@ -590,7 +691,7 @@ def main():
                         time.sleep(3)
                         currentState = state.TAKE_INSTRUCTION
 
-                case state.PICKUP_OBJ:
+                case state.PICKUP_OBJ: # PICKUP will get objects around 24cm from front wheel
                     printCurrentState(currentState)
 
                     sendCommand("PICKUP")

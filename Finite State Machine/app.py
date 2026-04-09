@@ -4,7 +4,7 @@ import math
 import time
 import json
 
-runtime = 1.0
+runtime = 2
 
 
 def look_around(find_object):
@@ -99,27 +99,27 @@ def dimensions(find_object, class_names, x1, y1, x2, y2):
     print("Dimenison X of Bounding Box -->", bounding_x)
     print("Dimenison Y of Bounding Box -->", bounding_y)
     print("Offset -->", offset_x)
-    if (find_object == "mug" and find_object == class_names and 305 < offset_x and offset_x < 345):
+    if (find_object == "mug" and find_object == class_names):
         print("You are in front of mug")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "apple" and find_object == class_names and 300 < offset_x and offset_x < 340):
+    elif (find_object == "apple" and find_object == class_names):
         print("You are in front of apple")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "medicine" and find_object == class_names and 280 < offset_x and offset_x < 352):
+    elif (find_object == "medicine" and find_object == class_names):
         print("You are in front of medicine")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "user" and find_object == class_names and 320 < offset_x and offset_x < 360):
+    elif (find_object == "user" and find_object == class_names):
         print("You are in front of user")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "remote" and find_object == class_names and 290 < offset_x and offset_x < 360):
+    elif (find_object == "remote" and find_object == class_names):
         print("You are in front of remote")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 
-    elif (find_object == "shoe" and find_object == class_names and 290 < offset_x and offset_x < 360):
+    elif (find_object == "shoe" and find_object == class_names):
         print("You are in front of shoe")
         return [find_object, True, bounding_x, bounding_y, offset_x]
 

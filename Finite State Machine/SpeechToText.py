@@ -1,10 +1,10 @@
 import whisper
 import sounddevice as sd
 import numpy as np
-from LLM_Module import TextToJSON
+from LLM_Module import promptLLM
 
 # Load Whisper model (use "tiny", "base", "small", etc. for faster results)
-model = whisper.load_model("tiny")
+model = whisper.load_model("base")
 
 SAMPLE_RATE = 16000  # Whisper expects 16 kHz audio
 CHUNK_DURATION = 5    # seconds per audio chunk
