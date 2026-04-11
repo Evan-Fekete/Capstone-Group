@@ -21,7 +21,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define interface for talking with ESP32
 # ser = serial.Serial('/dev/serial0', 9600, timeout=1)
-ser = serial.Serial('/dev/ttyUSB1', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 
 # Define Constants for States for FSM
 
@@ -115,23 +115,23 @@ def main():
                         # Password Check Section
                         # ========================================
 
-                        print("="*50)
-                        print("Passphrase Check:")
-                        print("="*50)
+                        # print("="*50)
+                        # print("Passphrase Check:")
+                        # print("="*50)
 
-                        audio = speech.record_audio()
-                        user_input = speech.transcribe_audio(audio)
-                        # Uncomment to define user input
+                        # audio = speech.record_audio()
+                        # user_input = speech.transcribe_audio(audio)
+                        # # Uncomment to define user input
+                        # # time.sleep(1)
+                        # # user_input = "My name is Bob, Password, Lorell Ipsum"
+
+                        # # Non LLM version of passphrase check code
+                        # if password in user_input.lower():
+                        #     reply = "True"
+                        # else:
+                        #     reply = "False"
+
                         # time.sleep(1)
-                        # user_input = "My name is Bob, Password, Lorell Ipsum"
-
-                        # Non LLM version of passphrase check code
-                        if password in user_input.lower():
-                            reply = "True"
-                        else:
-                            reply = "False"
-
-                        time.sleep(1)
 
                         # # LLM version of passphrase check code
                         # prompt = """You are a robot control agent. If the user input contains the phrase 'Hey Siri' at any point, respond with 'True', otherwise respond with 'False'
@@ -148,13 +148,13 @@ def main():
                         # reply = speech.TextToJSON(formatted)
                         # print("\nLLM Response:\n", reply)
 
-                        if "True" in reply: 
-                            sendCommand("LISTEN")
-                            time.sleep(3)
-                            print("Passphrase Check Confirmed Moving On...\n")
-                        else: 
-                            print("Passphrase Check Failed Looping...\n")
-                            continue
+                        # if "True" in reply: 
+                        #     sendCommand("LISTEN")
+                        #     time.sleep(3)
+                        #     print("Passphrase Check Confirmed Moving On...\n")
+                        # else: 
+                        #     print("Passphrase Check Failed Looping...\n")
+                        #     continue
 
                         # ========================================
                         # User Instruction Check
@@ -166,12 +166,28 @@ def main():
 
                         time.sleep(1)
 
-                        # Uncomment to activate recording and transcription
+                        """
+                        TIMER START TIMER START TIMER START
+                        """
+                        start = time.perf_counter()
+
+                        # # Uncomment to activate recording and transcription
                         audio = speech.record_audio()
                         user_input = speech.transcribe_audio(audio)
                         # Uncomment to define user input
-                        # user_input = "Bring me the medicine"
-                        # time.sleep(1)
+
+                        """
+                        TIMER END TIMER END TIMER END
+                        """
+                        end = time.perf_counter()
+
+                        print(f"Elapsed time: {end - start:.6f} seconds")
+
+                        # user_input = "Where are my shoes"
+
+                        if user_input == "":
+                            print("No user input... Looping...")
+                            continue
                         
                         sendCommand("SERVO TILT 90")
                         time.sleep(3)
@@ -181,7 +197,7 @@ def main():
                         The robot should be able to fetch an object, look at an object, or update its passphrase.
                         If for fetch and look a parameter is not known then output unknown, always display action.
                         Follow the schema at all times, never use an action or object that does not appear in the schema.
-                        If the object is not obvious try and pick the closest option possible from the schema.
+                        If the object is not obvious try and pick the closest option possible from the schema, but do not make up an object on your own.
                             Schema: action (fetch/look/passphrase_update/unknown), object (apple/mug/medicine/shoes/remote/unknown)
                             Example 1:
                             User: bring me the apple
@@ -218,7 +234,7 @@ def main():
                                 currentAction = action.FETCH
                             case "look":
                                 currentAction = action.LOOK
-                            case "update_password":
+                            case "passphrase_update":
                                 currentAction = action.UPDATE_PASSWORD
                             case "unknown":
                                 currentAction = action.UNKNOWN
@@ -366,13 +382,13 @@ def main():
                         desiredOffsetMin = 290
 
                         firstTiltBx = 30
-                        firstTiltBy = 70
+                        firstTiltBy = 75
                         slowMoveBx = 60
                         slowMoveBy = 90
                     
                     if (target == "mug"):
-                        desiredBx = 110
-                        desiredBy = 112
+                        desiredBx = 100
+                        desiredBy = 135
                         desiredOffsetMax = 305
                         desiredOffsetMin = 295
 
@@ -382,8 +398,8 @@ def main():
                         slowMoveBy = 80
 
                     if (target == "remote"):
-                        desiredBx = 155
-                        desiredBy = 90
+                        desiredBx = 71
+                        desiredBy = 101
                         desiredOffsetMax = 333  # 330 is generally centred for remote
                         desiredOffsetMin = 320
 
@@ -393,13 +409,13 @@ def main():
                         slowMoveBy = 50
 
                     if (target == "shoe"):
-                        desiredBx = 105
-                        desiredBy = 110
+                        desiredBx = 112
+                        desiredBy = 130
                         desiredOffsetMax = 325
                         desiredOffsetMin = 316
 
                         firstTiltBx = 75
-                        firstTiltBy = 55
+                        firstTiltBy = 70
                         slowMoveBx = 143
                         slowMoveBy = 107
                         
@@ -512,6 +528,7 @@ def main():
                     else: currentState = state.PICKUP_OBJ
 
                 case state.FIND_USER:
+
                     # This state will move robot forward (or some predefined sequence of movments)
                     # Swivel camera and look for the user, if found stop the swiveling save servo position
                     # based on servo position turn car (turn for servoPosition*turnWeight)
@@ -642,7 +659,7 @@ def main():
                             time.sleep(5)
                             print("OBJECT HAS LEFT VIEW RETURNING TO FIND OBJECT STATE")
                             leftView = True
-                            continue
+                            break
 
                         elif (offset_x < desiredOffsetMin - 100):
                             sendCommand("L_LEFT")
@@ -688,7 +705,9 @@ def main():
 
                     if (leftView == True): currentState = state.FIND_USER
                     else: 
+
                         time.sleep(3)
+                        
                         currentState = state.TAKE_INSTRUCTION
 
                 case state.PICKUP_OBJ: # PICKUP will get objects around 24cm from front wheel

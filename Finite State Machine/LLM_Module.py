@@ -4,7 +4,7 @@
 
 import ollama
 
-def promptLLM(speech_input: str, model_name = "gemma3:1b") -> str:
+def promptLLM(speech_input: str, model_name = "gemma3:4b") -> str:
 
     # # Example User Input for testing
     # speech_input = "Bring me the apple"
