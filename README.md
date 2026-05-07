@@ -13,7 +13,7 @@ Plug in the Pi using the power supply, and also plug the Pi into your laptop/com
 
 ### VNC Viewer Setup
 
-I used VNC Viewer (mostly since I already have it for connecting to the lab computers). But, I also heard RealVNC also works quite well.
+I used VNC Viewer (mostly since I already have it for connecting to the lab computers). But, RealVNC also works quite well.
 
 At the top bar go to File>New Connection. Set the VNC Server to be "raspberrypi.local" and the name can be whatever you want.
 
