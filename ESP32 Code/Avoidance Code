@@ -1,0 +1,80 @@
+// ==========================
+// AVOIDANCE CODE
+// ==========================
+float getDistanceCM() {
+  const int NUM_SAMPLES = 7;
+  float readings[NUM_SAMPLES];
+
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    // --- Trigger ultrasonic pulse ---
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    // --- Read echo with timeout (IMPORTANT) ---
+    long duration = pulseIn(ECHO_PIN, HIGH, 25000); // 25ms timeout (~4m max)
+
+    float distance;
+    if (duration == 0) {
+      distance = 500.0; // treat as "no reading"
+    } else {
+      distance = duration * 0.034 / 2.0;
+    }
+
+    readings[i] = distance;
+
+    delay(50); //50ms between readings
+  }
+
+  // --- Sort readings (simple bubble sort) ---
+  for (int i = 0; i < NUM_SAMPLES - 1; i++) {
+    for (int j = i + 1; j < NUM_SAMPLES; j++) {
+      if (readings[j] < readings[i]) {
+        float temp = readings[i];
+        readings[i] = readings[j];
+        readings[j] = temp;
+      }
+    }
+  }
+
+  // --- Return median ---
+  return readings[NUM_SAMPLES / 2];
+}
+
+void avoidObstacle() {
+  // Serial.println("OBSTACLE DETECTED - Avoiding");
+  stopMotors();
+  delay(200);
+
+  moveBackward(SPEED_FWD);
+  delay(AVOID_BACKUP_MS);
+  stopMotors();
+
+  int strafeChoice = 0;
+
+  // Delay inbetween backup and strafe
+  delay(1000);
+
+  // Random strafe (mecanum advantage)
+  if (strafeChoice == 0) {
+    strafeLeft(SPEED_FWD);
+    // Serial.println("  → Strafe LEFT");
+  } else {
+    strafeRight(SPEED_TURN);
+    // Serial.println("  → Strafe RIGHT");
+  }
+  delay(AVOID_STRAFE_MS);
+
+  // // Small re-align
+  // if (random(0, 2) == 0) {
+  //   turnLeft(SPEED_TURN / 2);
+  // } else {
+  //   turnRight(SPEED_TURN / 2);
+  // }
+  // delay(AVOID_ROTATE_MS);
+  // Serial.println("Avoidance finished - resuming");
+  stopMotors(); 
+  delay(50);
+}
