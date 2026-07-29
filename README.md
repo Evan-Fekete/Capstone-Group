@@ -4,6 +4,7 @@
 
 _Disclaimer:_ This is the method I used to run the Pi locally with my laptop there is a good chance that there are other methods will work as well.
 
+Video Demo: https://drive.google.com/file/d/1PJpd4uROuBwoH3U14nBBAse16ZN04Se5/view?usp=sharing
 
 ### Basic Hardware Setup
 
